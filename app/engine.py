@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import csv
+import json
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
 from math import ceil
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -162,6 +165,106 @@ def add_months(base_date: date, months: int) -> date:
     return date(year, month, day)
 
 
+def parse_date(value: str) -> date:
+    return date.fromisoformat(value.strip())
+
+
+def parse_optional_int(value: str) -> Optional[int]:
+    value = value.strip()
+    if not value:
+        return None
+    return int(value)
+
+
+def parse_optional_str(value: str) -> Optional[str]:
+    value = value.strip()
+    if not value:
+        return None
+    return value
+
+
+def parse_id_list(value: str) -> List[str]:
+    value = value.strip()
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def load_school_params(filepath: str) -> SchoolParams:
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    jours_feries = [
+        Holiday(
+            day=parse_date(item["day"]),
+            label=item.get("label", "jour férié"),
+        )
+        for item in data.get("jours_feries", [])
+    ]
+
+    vacances = [
+        VacationPeriod(
+            start=parse_date(item["start"]),
+            end=parse_date(item["end"]),
+            label=item.get("label", "vacances"),
+        )
+        for item in data.get("vacances", [])
+    ]
+
+    stages = [
+        StagePeriod(
+            stage_id=item["stage_id"],
+            start=parse_date(item["start"]),
+            end=parse_date(item["end"]),
+            label=item.get("label", "stage"),
+        )
+        for item in data.get("stages", [])
+    ]
+
+    return SchoolParams(
+        nom_ecole=data["nom_ecole"],
+        date_debut=parse_date(data["date_debut"]),
+        nombre_aspirants=int(data["nombre_aspirants"]),
+        date_assermentation=parse_date(data["date_assermentation"]),
+        jours_feries=jours_feries,
+        vacances=vacances,
+        stages=stages,
+        duree_min_mois=int(data.get("duree_min_mois", 8)),
+    )
+
+
+def load_courses(filepath: str) -> List[CourseTemplate]:
+    courses: List[CourseTemplate] = []
+
+    with open(filepath, "r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            course = CourseTemplate(
+                branche=row["branche"].strip(),
+                sous_branche=row["sous_branche"].strip(),
+                type=CourseType(row["type"].strip()),
+                identifiant_cours=row["identifiant_cours"].strip(),
+                lecon=row["lecon"].strip(),
+                duree_minutes=int(row["duree_minutes"].strip()),
+                participants_max=int(row["participants_max"].strip()),
+                ordre_lecon=int(row["ordre_lecon"].strip() or 0),
+                apres_cours_id=parse_id_list(row["apres_cours_id"]),
+                avant_cours_id=parse_id_list(row["avant_cours_id"]),
+                delai_max_valeur=parse_optional_int(row["delai_max_valeur"]),
+                delai_max_unite=(
+                    DelayUnit(row["delai_max_unite"].strip())
+                    if row["delai_max_unite"].strip()
+                    else None
+                ),
+                max_par_semaine=parse_optional_int(row["max_par_semaine"]),
+                jour_specifique=parse_optional_str(row["jour_specifique"]),
+            )
+            courses.append(course)
+
+    return courses
+
+
 class PlanningEngine:
     STANDARD_DAY_MINUTES = 480
     EXTENDED_DAY_MINUTES = 540
@@ -252,3 +355,21 @@ class PlanningEngine:
             volume_total_semaines_theoriques=round(total_minutes / self.MAX_WEEKLY_MINUTES, 2),
             date_fin_minimale=add_months(self.school.date_debut, self.school.duree_min_mois),
         )
+
+
+if __name__ == "__main__":
+    base_dir = Path(__file__).resolve().parent.parent
+    school_path = base_dir / "data" / "school_params.json"
+    courses_path = base_dir / "data" / "courses.csv"
+
+    school = load_school_params(str(school_path))
+    courses = load_courses(str(courses_path))
+
+    engine = PlanningEngine(school=school, courses=courses)
+
+    print("=== Charges par cours ===")
+    for row in engine.course_loads():
+        print(row)
+
+    print("\n=== Résumé école ===")
+    print(engine.school_load_summary())

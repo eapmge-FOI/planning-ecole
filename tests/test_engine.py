@@ -6,6 +6,8 @@ from app.engine import (
     DelayUnit,
     PlanningEngine,
     SchoolParams,
+    load_courses,
+    load_school_params,
 )
 
 
@@ -87,3 +89,41 @@ def test_course_with_delay_is_not_without_constraint():
     )
 
     assert course.is_without_special_constraint is False
+
+
+def test_load_school_params():
+    school = load_school_params("data/school_params.json")
+
+    assert school.nom_ecole == "Ecole PM 2026"
+    assert school.nombre_aspirants == 35
+    assert school.date_debut == date(2026, 1, 5)
+    assert school.date_assermentation == date(2026, 9, 4)
+    assert len(school.jours_feries) == 2
+    assert len(school.vacances) == 1
+    assert len(school.stages) == 1
+
+
+def test_load_courses():
+    courses = load_courses("data/courses.csv")
+
+    assert len(courses) == 6
+    assert courses[0].identifiant_cours == "A1"
+    assert courses[1].apres_cours_id == ["A1"]
+    assert courses[2].identifiant_cours == "H14"
+    assert courses[2].max_par_semaine == 1
+    assert courses[3].jour_specifique == "vendredi"
+
+
+def test_school_load_summary():
+    school = load_school_params("data/school_params.json")
+    courses = load_courses("data/courses.csv")
+    engine = PlanningEngine(school=school, courses=courses)
+
+    summary = engine.school_load_summary()
+
+    assert summary.nom_ecole == "Ecole PM 2026"
+    assert summary.nombre_aspirants == 35
+    assert summary.total_cours_catalogue == 6
+    assert summary.total_seances_reelles > 0
+    assert summary.volume_total_minutes > 0
+    assert summary.volume_total_heures > 0

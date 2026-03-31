@@ -1,1 +1,31 @@
-pytest
+{
+  "nom_ecole": "Ecole PM 2026",
+  "date_debut": "2026-01-05",
+  "nombre_aspirants": 35,
+  "date_assermentation": "2026-09-04",
+  "jours_feries": [
+    {
+      "day": "2026-04-03",
+      "label": "jour férié"
+    },
+    {
+      "day": "2026-04-06",
+      "label": "jour férié"
+    }
+  ],
+  "vacances": [
+    {
+      "start": "2026-02-16",
+      "end": "2026-02-20",
+      "label": "vacances"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "S1",
+      "start": "2026-05-11",
+      "end": "2026-05-22",
+      "label": "stage"
+    }
+  ]
+}

@@ -1,1 +1,7 @@
-pytest
+branche,sous_branche,type,identifiant_cours,lecon,duree_minutes,participants_max,ordre_lecon,apres_cours_id,avant_cours_id,delai_max_valeur,delai_max_unite,max_par_semaine,jour_specifique
+Droit,Procédure,theorique,A1,Bases légales 1,120,35,1,,,,,,
+Droit,Procédure,theorique,A2,Bases légales 2,120,35,2,A1,,,,,
+Sport,Sport,pratique,H14,Circuit condition physique,150,12,0,,,,,1,
+Marche de service,Débriefing,theorique,MS1,Débriefing,60,35,0,,,,,1,vendredi
+Administration,Assermentation,theorique,AS1,Assermentation,480,35,0,,,,,,
+Formation,Stage,stage,S1,Stage,480,35,0,A2,,,,,

@@ -14,8 +14,15 @@
   <div class="card">
     <h2>Paramètres</h2>
 
-    <label for="aspirantsInput">Nombre d’aspirants :</label>
-    <input type="number" id="aspirantsInput" min="1" value="35">
+    <div style="margin-bottom: 10px;">
+      <label for="dateDebutInput">Date de début :</label>
+      <input type="date" id="dateDebutInput">
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <label for="aspirantsInput">Nombre d’aspirants :</label>
+      <input type="number" id="aspirantsInput" min="1" value="35">
+    </div>
 
     <button onclick="loadData()">Calculer la charge école</button>
   </div>

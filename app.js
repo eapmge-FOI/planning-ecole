@@ -49,17 +49,60 @@ function getConstraintLabel(course) {
   return constraints.length === 0 ? "aucune contrainte" : constraints.join(" | ");
 }
 
-function renderSpecialPeriods(school) {
+function parseLines(text) {
+  return text
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => line !== "");
+}
+
+function parseJoursFeries(text) {
+  return parseLines(text).map(line => ({
+    day: line,
+    label: "jour férié"
+  }));
+}
+
+function parseVacances(text) {
+  return parseLines(text)
+    .map(line => {
+      const parts = line.split(",").map(x => x.trim());
+      if (parts.length !== 2) return null;
+      return {
+        start: parts[0],
+        end: parts[1],
+        label: "vacances"
+      };
+    })
+    .filter(item => item !== null);
+}
+
+function parseStages(text) {
+  return parseLines(text)
+    .map(line => {
+      const parts = line.split(",").map(x => x.trim());
+      if (parts.length !== 3) return null;
+      return {
+        stage_id: parts[0],
+        start: parts[1],
+        end: parts[2],
+        label: "stage"
+      };
+    })
+    .filter(item => item !== null);
+}
+
+function renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages) {
   const container = document.getElementById("specialPeriods");
 
   let html = "";
 
-  html += `<p><b>Assermentation :</b> ${formatDateFR(new Date(school.date_assermentation))}</p>`;
+  html += `<p><b>Assermentation :</b> ${formatDateFR(new Date(assermentationDate))}</p>`;
 
   html += `<h3>Jours fériés</h3>`;
-  if (school.jours_feries && school.jours_feries.length > 0) {
+  if (joursFeries.length > 0) {
     html += "<ul>";
-    school.jours_feries.forEach(item => {
+    joursFeries.forEach(item => {
       html += `<li>${formatDateFR(new Date(item.day))} - ${item.label}</li>`;
     });
     html += "</ul>";
@@ -68,9 +111,9 @@ function renderSpecialPeriods(school) {
   }
 
   html += `<h3>Vacances</h3>`;
-  if (school.vacances && school.vacances.length > 0) {
+  if (vacances.length > 0) {
     html += "<ul>";
-    school.vacances.forEach(item => {
+    vacances.forEach(item => {
       html += `<li>${formatDateFR(new Date(item.start))} au ${formatDateFR(new Date(item.end))} - ${item.label}</li>`;
     });
     html += "</ul>";
@@ -79,9 +122,9 @@ function renderSpecialPeriods(school) {
   }
 
   html += `<h3>Stages</h3>`;
-  if (school.stages && school.stages.length > 0) {
+  if (stages.length > 0) {
     html += "<ul>";
-    school.stages.forEach(item => {
+    stages.forEach(item => {
       html += `<li>${item.stage_id} : ${formatDateFR(new Date(item.start))} au ${formatDateFR(new Date(item.end))} - ${item.label}</li>`;
     });
     html += "</ul>";
@@ -96,11 +139,13 @@ async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
 
-  const dateDebutInput = document.getElementById("dateDebutInput");
-  const aspirantsInput = document.getElementById("aspirantsInput");
+  const dateDebut = document.getElementById("dateDebutInput").value || school.date_debut;
+  const nombreAspirants = Number(document.getElementById("aspirantsInput").value);
+  const assermentationDate = document.getElementById("assermentationInput").value || school.date_assermentation;
 
-  const dateDebut = dateDebutInput.value || school.date_debut;
-  const nombreAspirants = Number(aspirantsInput.value);
+  const joursFeries = parseJoursFeries(document.getElementById("joursFeriesInput").value);
+  const vacances = parseVacances(document.getElementById("vacancesInput").value);
+  const stages = parseStages(document.getElementById("stagesInput").value);
 
   let totalMinutes = 0;
   let totalSessions = 0;
@@ -197,7 +242,7 @@ async function loadData() {
     <p><b>Total salles supplémentaires (somme théorique) :</b> ${totalSallesSupp}</p>
   `;
 
-  renderSpecialPeriods(school);
+  renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages);
 }
 
 async function initializeForm() {
@@ -205,6 +250,23 @@ async function initializeForm() {
 
   document.getElementById("dateDebutInput").value = school.date_debut;
   document.getElementById("aspirantsInput").value = school.nombre_aspirants;
+  document.getElementById("assermentationInput").value = school.date_assermentation;
+
+  const joursFeriesText = (school.jours_feries || [])
+    .map(item => item.day)
+    .join("\n");
+
+  const vacancesText = (school.vacances || [])
+    .map(item => `${item.start},${item.end}`)
+    .join("\n");
+
+  const stagesText = (school.stages || [])
+    .map(item => `${item.stage_id},${item.start},${item.end}`)
+    .join("\n");
+
+  document.getElementById("joursFeriesInput").value = joursFeriesText;
+  document.getElementById("vacancesInput").value = vacancesText;
+  document.getElementById("stagesInput").value = stagesText;
 
   loadData();
 }

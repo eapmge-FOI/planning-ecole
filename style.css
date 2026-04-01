@@ -1,35 +1,51 @@
-body{
-
-font-family:Arial;
-margin:40px;
-
+body {
+  font-family: Arial;
+  margin: 40px;
 }
 
-.card{
-
-border:1px solid #ccc;
-border-radius:8px;
-padding:20px;
-margin-bottom:20px;
-
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-table{
-
-border-collapse:collapse;
-width:100%;
-
+table {
+  border-collapse: collapse;
+  width: 100%;
 }
 
-th,td{
-
-border:1px solid #ccc;
-padding:8px;
-
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  vertical-align: top;
 }
 
-th{
+th {
+  background: #f4f4f4;
+}
 
-background:#f4f4f4;
+.status-weekend {
+  background: #efefef;
+}
 
+.status-holiday {
+  background: #e0e0e0;
+}
+
+.status-vacation {
+  background: #e8e8e8;
+}
+
+.status-stage {
+  background: #dbeafe;
+}
+
+.status-assermentation {
+  background: #fde68a;
+}
+
+.status-open {
+  background: #ffffff;
 }

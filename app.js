@@ -305,6 +305,72 @@ function computeRealisticCapacity(calendarDays) {
   };
 }
 
+function getOrderingPriority(course) {
+  if (course.jour_specifique) {
+    return { level: 1, reason: `jour spécifique: ${course.jour_specifique}` };
+  }
+
+  if (course.delai_max_valeur !== null && course.delai_max_unite !== null) {
+    return { level: 2, reason: `délai max: ${course.delai_max_valeur} ${course.delai_max_unite}` };
+  }
+
+  if ((course.apres_cours_id && course.apres_cours_id.length > 0) ||
+      (course.avant_cours_id && course.avant_cours_id.length > 0)) {
+    return { level: 3, reason: "dépendance avec autre cours" };
+  }
+
+  if (course.ordre_lecon && course.ordre_lecon > 0) {
+    return { level: 4, reason: `ordre interne sous-branche: ${course.ordre_lecon}` };
+  }
+
+  if (course.max_par_semaine !== null) {
+    return { level: 5, reason: `maximum par semaine: ${course.max_par_semaine}` };
+  }
+
+  return { level: 6, reason: "aucune contrainte particulière" };
+}
+
+function renderOrderingTable(courses) {
+  const tbody = document.querySelector("#orderingTable tbody");
+  tbody.innerHTML = "";
+
+  const ordered = [...courses]
+    .map(course => {
+      const ordering = getOrderingPriority(course);
+      return {
+        ...course,
+        orderingLevel: ordering.level,
+        orderingReason: ordering.reason
+      };
+    })
+    .sort((a, b) => {
+      if (a.orderingLevel !== b.orderingLevel) {
+        return a.orderingLevel - b.orderingLevel;
+      }
+
+      if ((a.ordre_lecon || 0) !== (b.ordre_lecon || 0)) {
+        return (a.ordre_lecon || 0) - (b.ordre_lecon || 0);
+      }
+
+      return a.id.localeCompare(b.id);
+    });
+
+  ordered.forEach((course, index) => {
+    const row = `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${course.id}</td>
+        <td>${course.lecon}</td>
+        <td>${course.orderingLevel}</td>
+        <td>${course.orderingReason}</td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+
+  return ordered;
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
@@ -410,6 +476,8 @@ async function loadData() {
 
   const calendarStats = renderBaseCalendar(calendarDays);
   const capacityStats = computeRealisticCapacity(calendarDays);
+
+  renderOrderingTable(courses);
 
   const capaciteHeuresStandard = capacityStats.standardHours;
   const capaciteHeuresRealiste = capacityStats.realisticCapacity;

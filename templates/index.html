@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planning école</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        h1, h2 {
+            margin-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f3f3f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Résumé de l'école</h1>
+
+    <div class="card">
+        <p><strong>Nom école :</strong> {{ summary.nom_ecole }}</p>
+        <p><strong>Nombre aspirants :</strong> {{ summary.nombre_aspirants }}</p>
+        <p><strong>Total cours catalogue :</strong> {{ summary.total_cours_catalogue }}</p>
+        <p><strong>Total séances réelles :</strong> {{ summary.total_seances_reelles }}</p>
+        <p><strong>Volume total minutes :</strong> {{ summary.volume_total_minutes }}</p>
+        <p><strong>Volume total heures :</strong> {{ summary.volume_total_heures }}</p>
+        <p><strong>Jours théoriques :</strong> {{ summary.volume_total_jours_theoriques }}</p>
+        <p><strong>Semaines théoriques :</strong> {{ summary.volume_total_semaines_theoriques }}</p>
+        <p><strong>Date fin minimale :</strong> {{ summary.date_fin_minimale }}</p>
+    </div>
+
+    <h2>Charge par cours</h2>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Identifiant</th>
+                    <th>Leçon</th>
+                    <th>Groupes</th>
+                    <th>Séances réelles</th>
+                    <th>Minutes</th>
+                    <th>Heures</th>
+                    <th>Sans contrainte</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in course_loads %}
+                <tr>
+                    <td>{{ row.identifiant_cours }}</td>
+                    <td>{{ row.lecon }}</td>
+                    <td>{{ row.nombre_groupes }}</td>
+                    <td>{{ row.nombre_seances_reelles }}</td>
+                    <td>{{ row.volume_total_minutes }}</td>
+                    <td>{{ row.volume_total_heures }}</td>
+                    <td>{{ "oui" if row.sans_contrainte else "non" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

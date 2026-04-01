@@ -6,11 +6,17 @@
 "type":"theorique",
 "lecon":"Bases légales 1",
 "duree":120,
-"participants_max":35,
+"participants":35,
+"encadrants":1,
+"division":"Non",
+"simultane":"Non",
 "ordre_lecon":1,
 "apres_cours_id":[],
-"delai_max":null,
-"max_par_semaine":null
+"avant_cours_id":[],
+"delai_max_valeur":null,
+"delai_max_unite":null,
+"max_par_semaine":null,
+"jour_specifique":null
 },
 
 {
@@ -20,11 +26,17 @@
 "type":"theorique",
 "lecon":"Bases légales 2",
 "duree":120,
-"participants_max":35,
+"participants":35,
+"encadrants":1,
+"division":"Non",
+"simultane":"Non",
 "ordre_lecon":2,
 "apres_cours_id":["A1"],
-"delai_max":null,
-"max_par_semaine":null
+"avant_cours_id":[],
+"delai_max_valeur":null,
+"delai_max_unite":null,
+"max_par_semaine":null,
+"jour_specifique":null
 },
 
 {
@@ -34,11 +46,17 @@
 "type":"pratique",
 "lecon":"Condition physique",
 "duree":150,
-"participants_max":12,
+"participants":12,
+"encadrants":1,
+"division":"Oui",
+"simultane":"Oui",
 "ordre_lecon":0,
 "apres_cours_id":[],
-"delai_max":null,
-"max_par_semaine":1
+"avant_cours_id":[],
+"delai_max_valeur":null,
+"delai_max_unite":null,
+"max_par_semaine":1,
+"jour_specifique":null
 },
 
 {
@@ -48,11 +66,17 @@
 "type":"theorique",
 "lecon":"Débriefing",
 "duree":60,
-"participants_max":35,
+"participants":35,
+"encadrants":1,
+"division":"Non",
+"simultane":"Non",
 "ordre_lecon":0,
 "apres_cours_id":[],
-"delai_max":null,
-"max_par_semaine":1
+"avant_cours_id":[],
+"delai_max_valeur":null,
+"delai_max_unite":null,
+"max_par_semaine":1,
+"jour_specifique":"vendredi"
 },
 
 {
@@ -62,24 +86,16 @@
 "type":"theorique",
 "lecon":"Assermentation",
 "duree":480,
-"participants_max":35,
+"participants":35,
+"encadrants":1,
+"division":"Non",
+"simultane":"Non",
 "ordre_lecon":0,
 "apres_cours_id":[],
-"delai_max":null,
-"max_par_semaine":null
-},
-
-{
-"id":"S1",
-"branche":"Formation",
-"sous_branche":"Stage",
-"type":"stage",
-"lecon":"Stage",
-"duree":480,
-"participants_max":35,
-"ordre_lecon":0,
-"apres_cours_id":["A2"],
-"delai_max":null,
-"max_par_semaine":null
+"avant_cours_id":[],
+"delai_max_valeur":null,
+"delai_max_unite":null,
+"max_par_semaine":null,
+"jour_specifique":null
 }
 ]

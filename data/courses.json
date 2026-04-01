@@ -1,0 +1,29 @@
+[
+{
+"id":"A1",
+"lecon":"Bases légales 1",
+"duree":120,
+"participants_max":35
+},
+
+{
+"id":"A2",
+"lecon":"Bases légales 2",
+"duree":120,
+"participants_max":35
+},
+
+{
+"id":"H14",
+"lecon":"Condition physique",
+"duree":150,
+"participants_max":12
+},
+
+{
+"id":"MS1",
+"lecon":"Débriefing",
+"duree":60,
+"participants_max":35
+}
+]

@@ -371,6 +371,55 @@ function renderOrderingTable(courses) {
   return ordered;
 }
 
+function getInitialAvailability(course, allCourses) {
+  if (course.apres_cours_id && course.apres_cours_id.length > 0) {
+    return {
+      status: "bloqué",
+      reason: `dépend de: ${course.apres_cours_id.join(", ")}`
+    };
+  }
+
+  if (course.ordre_lecon && course.ordre_lecon > 1) {
+    const previousCourses = allCourses.filter(other =>
+      other.sous_branche === course.sous_branche &&
+      other.ordre_lecon > 0 &&
+      other.ordre_lecon < course.ordre_lecon
+    );
+
+    if (previousCourses.length > 0) {
+      return {
+        status: "bloqué",
+        reason: `attend ordre précédent dans ${course.sous_branche}`
+      };
+    }
+  }
+
+  return {
+    status: "plaçable",
+    reason: "aucun blocage initial"
+  };
+}
+
+function renderAvailabilityTable(courses) {
+  const tbody = document.querySelector("#availabilityTable tbody");
+  tbody.innerHTML = "";
+
+  courses.forEach(course => {
+    const availability = getInitialAvailability(course, courses);
+
+    const row = `
+      <tr>
+        <td>${course.id}</td>
+        <td>${course.lecon}</td>
+        <td>${availability.status}</td>
+        <td>${availability.reason}</td>
+      </tr>
+    `;
+
+    tbody.innerHTML += row;
+  });
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
@@ -478,6 +527,7 @@ async function loadData() {
   const capacityStats = computeRealisticCapacity(calendarDays);
 
   renderOrderingTable(courses);
+  renderAvailabilityTable(courses);
 
   const capaciteHeuresStandard = capacityStats.standardHours;
   const capaciteHeuresRealiste = capacityStats.realisticCapacity;

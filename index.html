@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+<meta charset="UTF-8">
+<title>Planning école police</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Planificateur école police</h1>
+
+<div class="card">
+
+<h2>Paramètres</h2>
+
+<button onclick="loadData()">Calculer la charge école</button>
+
+</div>
+
+<div class="card">
+
+<h2>Résumé</h2>
+
+<div id="summary"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Cours</h2>
+
+<table id="coursesTable">
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Leçon</th>
+<th>Durée</th>
+<th>Participants max</th>
+<th>Groupes</th>
+<th>Heures totales</th>
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

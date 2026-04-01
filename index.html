@@ -2,59 +2,49 @@
 <html lang="fr">
 
 <head>
-<meta charset="UTF-8">
-<title>Planning école police</title>
-
-<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8">
+  <title>Planning école police</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>Planificateur école police</h1>
+  <h1>Planificateur école police</h1>
 
-<div class="card">
+  <div class="card">
+    <h2>Paramètres</h2>
 
-<h2>Paramètres</h2>
+    <label for="aspirantsInput">Nombre d’aspirants :</label>
+    <input type="number" id="aspirantsInput" min="1" value="35">
 
-<button onclick="loadData()">Calculer la charge école</button>
+    <button onclick="loadData()">Calculer la charge école</button>
+  </div>
 
-</div>
+  <div class="card">
+    <h2>Résumé</h2>
+    <div id="summary"></div>
+  </div>
 
-<div class="card">
+  <div class="card">
+    <h2>Cours</h2>
 
-<h2>Résumé</h2>
+    <table id="coursesTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Leçon</th>
+          <th>Durée (min)</th>
+          <th>Participants max</th>
+          <th>Groupes</th>
+          <th>Séances réelles</th>
+          <th>Heures totales</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<div id="summary"></div>
-
-</div>
-
-<div class="card">
-
-<h2>Cours</h2>
-
-<table id="coursesTable">
-
-<thead>
-
-<tr>
-<th>ID</th>
-<th>Leçon</th>
-<th>Durée</th>
-<th>Participants max</th>
-<th>Groupes</th>
-<th>Heures totales</th>
-</tr>
-
-</thead>
-
-<tbody></tbody>
-
-</table>
-
-</div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 
 </body>
 </html>

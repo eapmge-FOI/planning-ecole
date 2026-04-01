@@ -19,6 +19,26 @@ function formatDateFR(dateObj) {
   return `${day}.${month}.${year}`;
 }
 
+function formatDateISO(dateObj) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDayNameFR(dateObj) {
+  const days = [
+    "dimanche",
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi"
+  ];
+  return days[dateObj.getDay()];
+}
+
 function getConstraintLabel(course) {
   const constraints = [];
 
@@ -135,6 +155,106 @@ function renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages)
   container.innerHTML = html;
 }
 
+function isInPeriod(dateIso, startIso, endIso) {
+  return dateIso >= startIso && dateIso <= endIso;
+}
+
+function buildBaseCalendar(dateDebut, dateFin, assermentationDate, joursFeries, vacances, stages) {
+  const days = [];
+  const current = new Date(dateDebut);
+  const end = new Date(dateFin);
+
+  while (current <= end) {
+    const iso = formatDateISO(current);
+    const dayOfWeek = current.getDay();
+
+    let status = "ouvrable";
+    let detail = "";
+    let cssClass = "status-open";
+
+    if (iso === assermentationDate) {
+      status = "assermentation";
+      detail = "journée complète";
+      cssClass = "status-assermentation";
+    } else {
+      const matchingStage = stages.find(item => isInPeriod(iso, item.start, item.end));
+      const matchingVacation = vacances.find(item => isInPeriod(iso, item.start, item.end));
+      const matchingHoliday = joursFeries.find(item => item.day === iso);
+
+      if (matchingStage) {
+        status = "stage";
+        detail = matchingStage.stage_id;
+        cssClass = "status-stage";
+      } else if (matchingVacation) {
+        status = "vacances";
+        detail = matchingVacation.label;
+        cssClass = "status-vacation";
+      } else if (matchingHoliday) {
+        status = "jour férié";
+        detail = matchingHoliday.label;
+        cssClass = "status-holiday";
+      } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+        status = "week-end";
+        detail = "";
+        cssClass = "status-weekend";
+      }
+    }
+
+    days.push({
+      iso,
+      dateFr: formatDateFR(current),
+      jour: getDayNameFR(current),
+      status,
+      detail,
+      cssClass
+    });
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return days;
+}
+
+function renderBaseCalendar(calendarDays) {
+  const tbody = document.querySelector("#calendarTable tbody");
+  tbody.innerHTML = "";
+
+  let countOuvrables = 0;
+  let countWeekend = 0;
+  let countFeries = 0;
+  let countVacances = 0;
+  let countStages = 0;
+  let countAssermentation = 0;
+
+  calendarDays.forEach(day => {
+    if (day.status === "ouvrable") countOuvrables++;
+    if (day.status === "week-end") countWeekend++;
+    if (day.status === "jour férié") countFeries++;
+    if (day.status === "vacances") countVacances++;
+    if (day.status === "stage") countStages++;
+    if (day.status === "assermentation") countAssermentation++;
+
+    const row = `
+      <tr class="${day.cssClass}">
+        <td>${day.dateFr}</td>
+        <td>${day.jour}</td>
+        <td>${day.status}</td>
+        <td>${day.detail}</td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+
+  document.getElementById("calendarSummary").innerHTML = `
+    <p><b>Jours ouvrables :</b> ${countOuvrables}</p>
+    <p><b>Week-ends :</b> ${countWeekend}</p>
+    <p><b>Jours fériés :</b> ${countFeries}</p>
+    <p><b>Jours de vacances :</b> ${countVacances}</p>
+    <p><b>Jours de stage :</b> ${countStages}</p>
+    <p><b>Jours d'assermentation :</b> ${countAssermentation}</p>
+  `;
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
@@ -243,6 +363,17 @@ async function loadData() {
   `;
 
   renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages);
+
+  const calendarDays = buildBaseCalendar(
+    dateDebut,
+    formatDateISO(minimumEndDate),
+    assermentationDate,
+    joursFeries,
+    vacances,
+    stages
+  );
+
+  renderBaseCalendar(calendarDays);
 }
 
 async function initializeForm() {

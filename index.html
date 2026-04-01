@@ -24,6 +24,26 @@
       <input type="number" id="aspirantsInput" min="1" value="35">
     </div>
 
+    <div style="margin-bottom: 10px;">
+      <label for="assermentationInput">Date d’assermentation :</label>
+      <input type="date" id="assermentationInput">
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <label for="joursFeriesInput">Jours fériés (une date par ligne, format YYYY-MM-DD) :</label><br>
+      <textarea id="joursFeriesInput" rows="5" cols="50"></textarea>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <label for="vacancesInput">Vacances (une période par ligne, format YYYY-MM-DD,YYYY-MM-DD) :</label><br>
+      <textarea id="vacancesInput" rows="5" cols="50"></textarea>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <label for="stagesInput">Stages (une période par ligne, format ID,YYYY-MM-DD,YYYY-MM-DD) :</label><br>
+      <textarea id="stagesInput" rows="5" cols="50"></textarea>
+    </div>
+
     <button onclick="loadData()">Calculer la charge école</button>
   </div>
 

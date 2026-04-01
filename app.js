@@ -159,6 +159,22 @@ function isInPeriod(dateIso, startIso, endIso) {
   return dateIso >= startIso && dateIso <= endIso;
 }
 
+function getWeekKeyFromISO(isoDate) {
+  const d = new Date(isoDate);
+  d.setHours(0, 0, 0, 0);
+
+  const dayNum = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dayNum + 3);
+
+  const firstThursday = new Date(d.getFullYear(), 0, 4);
+  const firstDayNum = (firstThursday.getDay() + 6) % 7;
+  firstThursday.setDate(firstThursday.getDate() - firstDayNum + 3);
+
+  const weekNumber = 1 + Math.round((d - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+
+  return `${d.getFullYear()}-S${String(weekNumber).padStart(2, "0")}`;
+}
+
 function buildBaseCalendar(dateDebut, dateFin, assermentationDate, joursFeries, vacances, stages) {
   const days = [];
   const current = new Date(dateDebut);
@@ -206,7 +222,8 @@ function buildBaseCalendar(dateDebut, dateFin, assermentationDate, joursFeries, 
       jour: getDayNameFR(current),
       status,
       detail,
-      cssClass
+      cssClass,
+      dayOfWeek
     });
 
     current.setDate(current.getDate() + 1);
@@ -261,6 +278,30 @@ function renderBaseCalendar(calendarDays) {
     countVacances,
     countStages,
     countAssermentation
+  };
+}
+
+function computeRealisticCapacity(calendarDays) {
+  const openDays = calendarDays.filter(day => day.status === "ouvrable");
+  const fridayOpenDays = openDays.filter(day => day.dayOfWeek === 5).length;
+
+  const openWeeks = new Set(openDays.map(day => getWeekKeyFromISO(day.iso)));
+  const numberOfOpenWeeks = openWeeks.size;
+
+  const standardHours = openDays.length * 8;
+  const debriefHours = fridayOpenDays * 1;
+  const runningHours = numberOfOpenWeeks * 1.5;
+
+  const realisticCapacity = standardHours - debriefHours - runningHours;
+
+  return {
+    openDays: openDays.length,
+    fridayOpenDays,
+    numberOfOpenWeeks,
+    standardHours,
+    debriefHours,
+    runningHours,
+    realisticCapacity
   };
 }
 
@@ -352,7 +393,7 @@ async function loadData() {
     tbody.innerHTML += row;
   });
 
-  const totalHours = (totalMinutes / 60).toFixed(1);
+  const totalHours = totalMinutes / 60;
   const minimumEndDate = addMonthsToDate(dateDebut, 8);
   const heuresSansContrainte = (totalMinutesSansContrainte / 60).toFixed(1);
 
@@ -368,23 +409,35 @@ async function loadData() {
   );
 
   const calendarStats = renderBaseCalendar(calendarDays);
+  const capacityStats = computeRealisticCapacity(calendarDays);
 
-  const capaciteHeuresStandard = calendarStats.countOuvrables * 8;
-  const ecartHeures = (capaciteHeuresStandard - Number(totalHours)).toFixed(1);
-  const tientDansHuitMois = Number(ecartHeures) >= 0 ? "oui" : "non";
+  const capaciteHeuresStandard = capacityStats.standardHours;
+  const capaciteHeuresRealiste = capacityStats.realisticCapacity;
+  const ecartStandard = (capaciteHeuresStandard - totalHours).toFixed(1);
+  const ecartRealiste = (capaciteHeuresRealiste - totalHours).toFixed(1);
+
+  const tientStandard = Number(ecartStandard) >= 0 ? "oui" : "non";
+  const tientRealiste = Number(ecartRealiste) >= 0 ? "oui" : "non";
 
   document.getElementById("summary").innerHTML = `
     <p><b>École :</b> ${school.nom_ecole}</p>
     <p><b>Date début :</b> ${formatDateFR(new Date(dateDebut))}</p>
     <p><b>Nombre d’aspirants :</b> ${nombreAspirants}</p>
     <p><b>Total séances :</b> ${totalSessions}</p>
-    <p><b>Heures totales à placer :</b> ${totalHours}</p>
+    <p><b>Heures totales à placer :</b> ${totalHours.toFixed(1)}</p>
     <p><b>Date fin minimale (8 mois) :</b> ${formatDateFR(minimumEndDate)}</p>
     <hr>
     <p><b>Jours ouvrables disponibles :</b> ${calendarStats.countOuvrables}</p>
-    <p><b>Capacité théorique disponible (8h/jour) :</b> ${capaciteHeuresStandard.toFixed(1)} h</p>
-    <p><b>Écart capacité - charge :</b> ${ecartHeures} h</p>
-    <p><b>Ça tient théoriquement dans 8 mois :</b> ${tientDansHuitMois}</p>
+    <p><b>Vendredis ouvrables :</b> ${capacityStats.fridayOpenDays}</p>
+    <p><b>Semaines avec jours ouvrables :</b> ${capacityStats.numberOfOpenWeeks}</p>
+    <p><b>Capacité standard (8h/jour) :</b> ${capaciteHeuresStandard.toFixed(1)} h</p>
+    <p><b>Retrait débriefings vendredi :</b> -${capacityStats.debriefHours.toFixed(1)} h</p>
+    <p><b>Retrait course à pied hebdomadaire :</b> -${capacityStats.runningHours.toFixed(1)} h</p>
+    <p><b>Capacité réaliste estimée :</b> ${capaciteHeuresRealiste.toFixed(1)} h</p>
+    <p><b>Écart standard capacité - charge :</b> ${ecartStandard} h</p>
+    <p><b>Écart réaliste capacité - charge :</b> ${ecartRealiste} h</p>
+    <p><b>Ça tient théoriquement dans 8 mois (standard) :</b> ${tientStandard}</p>
+    <p><b>Ça tient théoriquement dans 8 mois (réaliste) :</b> ${tientRealiste}</p>
     <hr>
     <p><b>Cours sans contrainte :</b> ${totalCoursSansContrainte}</p>
     <p><b>Heures sans contrainte :</b> ${heuresSansContrainte}</p>

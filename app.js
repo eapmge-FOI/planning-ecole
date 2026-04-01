@@ -253,6 +253,15 @@ function renderBaseCalendar(calendarDays) {
     <p><b>Jours de stage :</b> ${countStages}</p>
     <p><b>Jours d'assermentation :</b> ${countAssermentation}</p>
   `;
+
+  return {
+    countOuvrables,
+    countWeekend,
+    countFeries,
+    countVacances,
+    countStages,
+    countAssermentation
+  };
 }
 
 async function loadData() {
@@ -347,21 +356,6 @@ async function loadData() {
   const minimumEndDate = addMonthsToDate(dateDebut, 8);
   const heuresSansContrainte = (totalMinutesSansContrainte / 60).toFixed(1);
 
-  document.getElementById("summary").innerHTML = `
-    <p><b>École :</b> ${school.nom_ecole}</p>
-    <p><b>Date début :</b> ${formatDateFR(new Date(dateDebut))}</p>
-    <p><b>Nombre d’aspirants :</b> ${nombreAspirants}</p>
-    <p><b>Total séances :</b> ${totalSessions}</p>
-    <p><b>Heures totales :</b> ${totalHours}</p>
-    <p><b>Date fin minimale (8 mois) :</b> ${formatDateFR(minimumEndDate)}</p>
-    <hr>
-    <p><b>Cours sans contrainte :</b> ${totalCoursSansContrainte}</p>
-    <p><b>Heures sans contrainte :</b> ${heuresSansContrainte}</p>
-    <p><b>Total encadrants simultanés (somme théorique) :</b> ${totalEncadrantsSimultanes}</p>
-    <p><b>Total véhicules D1 (somme théorique) :</b> ${totalVehicules}</p>
-    <p><b>Total salles supplémentaires (somme théorique) :</b> ${totalSallesSupp}</p>
-  `;
-
   renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages);
 
   const calendarDays = buildBaseCalendar(
@@ -373,7 +367,31 @@ async function loadData() {
     stages
   );
 
-  renderBaseCalendar(calendarDays);
+  const calendarStats = renderBaseCalendar(calendarDays);
+
+  const capaciteHeuresStandard = calendarStats.countOuvrables * 8;
+  const ecartHeures = (capaciteHeuresStandard - Number(totalHours)).toFixed(1);
+  const tientDansHuitMois = Number(ecartHeures) >= 0 ? "oui" : "non";
+
+  document.getElementById("summary").innerHTML = `
+    <p><b>École :</b> ${school.nom_ecole}</p>
+    <p><b>Date début :</b> ${formatDateFR(new Date(dateDebut))}</p>
+    <p><b>Nombre d’aspirants :</b> ${nombreAspirants}</p>
+    <p><b>Total séances :</b> ${totalSessions}</p>
+    <p><b>Heures totales à placer :</b> ${totalHours}</p>
+    <p><b>Date fin minimale (8 mois) :</b> ${formatDateFR(minimumEndDate)}</p>
+    <hr>
+    <p><b>Jours ouvrables disponibles :</b> ${calendarStats.countOuvrables}</p>
+    <p><b>Capacité théorique disponible (8h/jour) :</b> ${capaciteHeuresStandard.toFixed(1)} h</p>
+    <p><b>Écart capacité - charge :</b> ${ecartHeures} h</p>
+    <p><b>Ça tient théoriquement dans 8 mois :</b> ${tientDansHuitMois}</p>
+    <hr>
+    <p><b>Cours sans contrainte :</b> ${totalCoursSansContrainte}</p>
+    <p><b>Heures sans contrainte :</b> ${heuresSansContrainte}</p>
+    <p><b>Total encadrants simultanés (somme théorique) :</b> ${totalEncadrantsSimultanes}</p>
+    <p><b>Total véhicules D1 (somme théorique) :</b> ${totalVehicules}</p>
+    <p><b>Total salles supplémentaires (somme théorique) :</b> ${totalSallesSupp}</p>
+  `;
 }
 
 async function initializeForm() {

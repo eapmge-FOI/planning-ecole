@@ -49,6 +49,49 @@ function getConstraintLabel(course) {
   return constraints.length === 0 ? "aucune contrainte" : constraints.join(" | ");
 }
 
+function renderSpecialPeriods(school) {
+  const container = document.getElementById("specialPeriods");
+
+  let html = "";
+
+  html += `<p><b>Assermentation :</b> ${formatDateFR(new Date(school.date_assermentation))}</p>`;
+
+  html += `<h3>Jours fériés</h3>`;
+  if (school.jours_feries && school.jours_feries.length > 0) {
+    html += "<ul>";
+    school.jours_feries.forEach(item => {
+      html += `<li>${formatDateFR(new Date(item.day))} - ${item.label}</li>`;
+    });
+    html += "</ul>";
+  } else {
+    html += "<p>Aucun jour férié.</p>";
+  }
+
+  html += `<h3>Vacances</h3>`;
+  if (school.vacances && school.vacances.length > 0) {
+    html += "<ul>";
+    school.vacances.forEach(item => {
+      html += `<li>${formatDateFR(new Date(item.start))} au ${formatDateFR(new Date(item.end))} - ${item.label}</li>`;
+    });
+    html += "</ul>";
+  } else {
+    html += "<p>Aucune période de vacances.</p>";
+  }
+
+  html += `<h3>Stages</h3>`;
+  if (school.stages && school.stages.length > 0) {
+    html += "<ul>";
+    school.stages.forEach(item => {
+      html += `<li>${item.stage_id} : ${formatDateFR(new Date(item.start))} au ${formatDateFR(new Date(item.end))} - ${item.label}</li>`;
+    });
+    html += "</ul>";
+  } else {
+    html += "<p>Aucun stage.</p>";
+  }
+
+  container.innerHTML = html;
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
@@ -153,6 +196,8 @@ async function loadData() {
     <p><b>Total véhicules D1 (somme théorique) :</b> ${totalVehicules}</p>
     <p><b>Total salles supplémentaires (somme théorique) :</b> ${totalSallesSupp}</p>
   `;
+
+  renderSpecialPeriods(school);
 }
 
 async function initializeForm() {

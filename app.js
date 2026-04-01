@@ -46,18 +46,18 @@ function getConstraintLabel(course) {
     constraints.push(`jour: ${course.jour_specifique}`);
   }
 
-  if (constraints.length === 0) {
-    return "aucune contrainte";
-  }
-
-  return constraints.join(" | ");
+  return constraints.length === 0 ? "aucune contrainte" : constraints.join(" | ");
 }
 
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
 
-  const nombreAspirants = Number(document.getElementById("aspirantsInput").value);
+  const dateDebutInput = document.getElementById("dateDebutInput");
+  const aspirantsInput = document.getElementById("aspirantsInput");
+
+  const dateDebut = dateDebutInput.value || school.date_debut;
+  const nombreAspirants = Number(aspirantsInput.value);
 
   let totalMinutes = 0;
   let totalSessions = 0;
@@ -136,16 +136,16 @@ async function loadData() {
   });
 
   const totalHours = (totalMinutes / 60).toFixed(1);
-  const minimumEndDate = addMonthsToDate(school.date_debut, 8);
+  const minimumEndDate = addMonthsToDate(dateDebut, 8);
   const heuresSansContrainte = (totalMinutesSansContrainte / 60).toFixed(1);
 
   document.getElementById("summary").innerHTML = `
     <p><b>École :</b> ${school.nom_ecole}</p>
-    <p><b>Date début :</b> ${formatDateFR(new Date(school.date_debut))}</p>
-    <p><b>Aspirants :</b> ${nombreAspirants}</p>
+    <p><b>Date début :</b> ${formatDateFR(new Date(dateDebut))}</p>
+    <p><b>Nombre d’aspirants :</b> ${nombreAspirants}</p>
     <p><b>Total séances :</b> ${totalSessions}</p>
     <p><b>Heures totales :</b> ${totalHours}</p>
-    <p><b>Date fin minimale :</b> ${formatDateFR(minimumEndDate)}</p>
+    <p><b>Date fin minimale (8 mois) :</b> ${formatDateFR(minimumEndDate)}</p>
     <hr>
     <p><b>Cours sans contrainte :</b> ${totalCoursSansContrainte}</p>
     <p><b>Heures sans contrainte :</b> ${heuresSansContrainte}</p>
@@ -155,4 +155,13 @@ async function loadData() {
   `;
 }
 
-window.addEventListener("DOMContentLoaded", loadData);
+async function initializeForm() {
+  const school = await fetch("data/school_params.json").then(r => r.json());
+
+  document.getElementById("dateDebutInput").value = school.date_debut;
+  document.getElementById("aspirantsInput").value = school.nombre_aspirants;
+
+  loadData();
+}
+
+window.addEventListener("DOMContentLoaded", initializeForm);

@@ -690,6 +690,7 @@ function createCourseBuckets(batchSessions) {
 
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const openDays = getOpenDays(calendarDays);
+  const allDays = calendarDays;
   const sessions = buildRealSessions(courses, groups, nombreAspirants);
 
   const result = [];
@@ -781,42 +782,44 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   }
 
   function findDayIndexByIso(isoDate) {
-    return openDays.findIndex(day => day.iso === isoDate);
-  }
+  return allDays.findIndex(day => day.iso === isoDate);
+}
 
   while (sessionIndex < sessions.length) {
     const session = sessions[sessionIndex];
 
     // CAS 0 : assermentation à date fixe, journée complète
-    if (session.mode === "fixed_full_day") {
-      const assermentationInput = document.getElementById("assermentationInput");
-      const fixedDate = assermentationInput ? assermentationInput.value : null;
+if (session.mode === "fixed_full_day") {
+  const assermentationInput = document.getElementById("assermentationInput");
+  const fixedDate = assermentationInput ? assermentationInput.value : null;
 
-      if (fixedDate) {
-        const fixedDayIndex = findDayIndexByIso(fixedDate);
+  if (fixedDate) {
+    const fixedDayIndex = findDayIndexByIso(fixedDate);
 
-        if (fixedDayIndex >= 0) {
-          const blocks = [
-            ["08:00", "12:00", 240],
-            ["13:30", "17:30", 240]
-          ];
+    if (fixedDayIndex >= 0) {
+      const fixedDay = allDays[fixedDayIndex];
 
-          blocks.forEach(block => {
-            result.push({
-              date: openDays[fixedDayIndex].dateFr,
-              time: `${block[0]}-${block[1]}`,
-              groupe: "classe entière",
-              id: session.courseId,
-              lecon: session.lecon,
-              duree: block[2]
-            });
-          });
-        }
-      }
+      const blocks = [
+        ["08:00", "12:00", 240],
+        ["13:30", "17:30", 240]
+      ];
 
-      sessionIndex++;
-      continue;
+      blocks.forEach(block => {
+        result.push({
+          date: fixedDay.dateFr,
+          time: `${block[0]}-${block[1]}`,
+          groupe: "classe entière",
+          id: session.courseId,
+          lecon: session.lecon,
+          duree: block[2]
+        });
+      });
     }
+  }
+
+  sessionIndex++;
+  continue;
+}
 
     // CAS 1 : classe entière
     if (session.mode === "classe_entiere") {

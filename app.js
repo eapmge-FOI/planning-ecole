@@ -700,6 +700,28 @@ function minutesToTimeString(minutes) {
   return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
 }
 
+function getGroupCompatibleCourses(courses, completedIds){
+
+return courses.filter(course=>{
+
+if(completedIds.has(course.id))
+return false;
+
+if(course.division!=="Oui")
+return false;
+
+if(course.simultane!=="Non")
+return false;
+
+if(!dependenciesSatisfied(course,completedIds))
+return false;
+
+return true;
+
+});
+
+}
+
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const ordered = simulateExecution(courses).filter(x => x.id !== "---");
   const openDays = getOpenDays(calendarDays);
@@ -818,51 +840,99 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       return;
     }
 
-    // CAS 3 : division Oui + simultané Non
-    plannedGroups.forEach(group => {
-      dayIndex = findNextValidDayIndex(dayIndex, course);
+// CAS 3 : division Oui + simultané Non
 
-      let remaining = course.duree;
+let remaining = course.duree;
 
-      while (remaining > 0) {
-        if (dayIndex >= openDays.length) break;
+const completedIds = new Set(result.map(r=>r.id));
 
-        nextSlot();
+while(remaining>0){
 
-        if (dayIndex >= openDays.length) break;
+if(dayIndex>=openDays.length)
+break;
 
-        dayIndex = findNextValidDayIndex(dayIndex, course);
-        if (dayIndex >= openDays.length) break;
+nextSlot();
 
-        const slot = Math.min(30, remaining);
-        const start = currentMinutes;
-        const end = currentMinutes + slot;
+if(dayIndex>=openDays.length)
+break;
 
-        result.push({
-          date: openDays[dayIndex].dateFr,
-          time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-          groupe: group.name,
-          id: course.id,
-          lecon: course.lecon,
-          duree: slot
-        });
+dayIndex=findNextValidDayIndex(dayIndex,course);
 
-        groups
-          .filter(otherGroup => otherGroup.name !== group.name)
-          .forEach(otherGroup => {
-            result.push({
-              date: openDays[dayIndex].dateFr,
-              time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-              groupe: otherGroup.name,
-              id: "",
-              lecon: "à dispo des instructeurs",
-              duree: slot
-            });
-          });
+if(dayIndex>=openDays.length)
+break;
 
-        currentMinutes += slot;
-        remaining -= slot;
-      }
+const slot=Math.min(30,remaining);
+
+const start=currentMinutes;
+
+const end=currentMinutes+slot;
+
+// chercher d'autres cours compatibles
+const otherCourses=getGroupCompatibleCourses(courses,completedIds)
+.filter(c=>c.id!==course.id);
+
+let usedCourses=[course];
+
+groups.forEach((group,index)=>{
+
+let selectedCourse=null;
+
+if(index===0){
+
+selectedCourse=course;
+
+}else if(otherCourses.length>0){
+
+selectedCourse=otherCourses.shift();
+usedCourses.push(selectedCourse);
+
+}
+
+if(selectedCourse){
+
+result.push({
+
+date:openDays[dayIndex].dateFr,
+
+time:minutesToTimeString(start)+"-"+minutesToTimeString(end),
+
+groupe:group.name,
+
+id:selectedCourse.id,
+
+lecon:selectedCourse.lecon,
+
+duree:slot
+
+});
+
+}else{
+
+result.push({
+
+date:openDays[dayIndex].dateFr,
+
+time:minutesToTimeString(start)+"-"+minutesToTimeString(end),
+
+groupe:group.name,
+
+id:"",
+
+lecon:"à dispo des instructeurs",
+
+duree:slot
+
+});
+
+}
+
+});
+
+currentMinutes+=slot;
+
+remaining-=slot;
+
+}
     });
   });
 

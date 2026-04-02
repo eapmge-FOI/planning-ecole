@@ -1015,6 +1015,9 @@ async function loadData() {
   const groups = computeSchoolGroups(courses, nombreAspirants);
   renderGroups(groups);
 
+  const realSessions = buildRealSessions(courses, groups, nombreAspirants);
+renderRealSessionsTable(realSessions);
+
   const planning = buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants);
   renderPlanning(planning);
 

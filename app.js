@@ -780,8 +780,43 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return rotated;
   }
 
+  function findDayIndexByIso(isoDate) {
+    return openDays.findIndex(day => day.iso === isoDate);
+  }
+
   while (sessionIndex < sessions.length) {
     const session = sessions[sessionIndex];
+
+    // CAS 0 : assermentation à date fixe, journée complète
+    if (session.mode === "fixed_full_day") {
+      const assermentationInput = document.getElementById("assermentationInput");
+      const fixedDate = assermentationInput ? assermentationInput.value : null;
+
+      if (fixedDate) {
+        const fixedDayIndex = findDayIndexByIso(fixedDate);
+
+        if (fixedDayIndex >= 0) {
+          const blocks = [
+            ["08:00", "12:00", 240],
+            ["13:30", "17:30", 240]
+          ];
+
+          blocks.forEach(block => {
+            result.push({
+              date: openDays[fixedDayIndex].dateFr,
+              time: `${block[0]}-${block[1]}`,
+              groupe: "classe entière",
+              id: session.courseId,
+              lecon: session.lecon,
+              duree: block[2]
+            });
+          });
+        }
+      }
+
+      sessionIndex++;
+      continue;
+    }
 
     // CAS 1 : classe entière
     if (session.mode === "classe_entiere") {

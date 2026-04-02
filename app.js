@@ -320,36 +320,26 @@ return result;
 
 }
 
-function renderPlanning(planning){
+function renderPlanning(planning) {
+  const tbody = document.querySelector("#planningTable tbody");
+  if (!tbody) return;
 
-const tbody=document.querySelector("#planningTable tbody");
+  tbody.innerHTML = "";
 
-tbody.innerHTML="";
+  planning.forEach(row => {
+    const html = `
+      <tr>
+        <td>${row.date}</td>
+        <td>${row.time}</td>
+        <td>${row.groupe}</td>
+        <td>${row.id}</td>
+        <td>${row.lecon}</td>
+        <td>${row.duree}</td>
+      </tr>
+    `;
 
-planning.forEach(row=>{
-
-const html=`
-
-<tr>
-
-<td>${row.date}</td>
-
-<td>${row.time}</td>
-
-<td>${row.id}</td>
-
-<td>${row.lecon}</td>
-
-<td>${row.duree}</td>
-
-</tr>
-
-`;
-
-tbody.innerHTML+=html;
-
-});
-
+    tbody.innerHTML += html;
+  });
 }
 
 function renderBaseCalendar(calendarDays) {

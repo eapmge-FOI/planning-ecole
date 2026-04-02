@@ -591,7 +591,7 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "classe_entiere",
-        groupName: "classe entière"
+        label: "classe entière"
       });
       return;
     }
@@ -607,22 +607,24 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "simultane",
-        groups: plannedGroups.map(g => g.name)
+        groups: plannedGroups.map(g => g.name),
+        label: plannedGroups.map(g => g.name).join(", ")
       });
       return;
     }
 
-    plannedGroups.forEach(group => {
+    for (let i = 1; i <= requiredGroups; i++) {
       sessions.push({
-        sessionId: `${course.id}-${group.name}`,
+        sessionId: `${course.id}-REP${i}`,
         courseId: course.id,
         lecon: course.lecon,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "non_simultane",
-        groupName: group.name
+        repetition: i,
+        label: `répétition ${i}`
       });
-    });
+    }
   });
 
   return sessions;
@@ -640,7 +642,7 @@ function renderRealSessionsTable(sessions) {
         ? "classe entière"
         : session.mode === "simultane"
         ? session.groups.join(", ")
-        : session.groupName;
+        : session.label;
 
     const row = `
       <tr>
@@ -681,6 +683,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   let dayIndex = 0;
   let currentMinutes = 8 * 60;
   let sessionIndex = 0;
+  let rotationOffset = 0;
 
   function nextSlot() {
     if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
@@ -711,6 +714,14 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     }
 
     return idx;
+  }
+
+  function getRotatedGroups() {
+    const rotated = [];
+    for (let i = 0; i < groups.length; i++) {
+      rotated.push(groups[(i + rotationOffset) % groups.length]);
+    }
+    return rotated;
   }
 
   while (sessionIndex < sessions.length) {
@@ -788,7 +799,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       continue;
     }
 
-    // CAS 3 : non simultané
+    // CAS 3 : non simultané, version continue
     const batchJour = session.jour_specifique || "";
     const batch = [];
 
@@ -804,72 +815,80 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       sessionIndex++;
     }
 
-    let queue = [...batch];
+    const buckets = {};
+    batch.forEach(s => {
+      if (!buckets[s.courseId]) {
+        buckets[s.courseId] = [];
+      }
+      buckets[s.courseId].push(s);
+    });
 
-    while (queue.some(s => s.remaining > 0)) {
-      if (dayIndex >= openDays.length) break;
+    const courseIds = Object.keys(buckets);
 
-      nextSlot();
-      if (dayIndex >= openDays.length) break;
+    while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
+      const rotatedGroups = getRotatedGroups();
 
-      dayIndex = findNextValidDayIndex(dayIndex, batchJour);
-      if (dayIndex >= openDays.length) break;
-
-      const start = currentMinutes;
-      const end = currentMinutes + 30;
-
-      const usedCourses = new Set();
-      const usedGroups = new Set();
-      const assignedThisSlot = [];
-
-      // on sélectionne des séances compatibles pour ce créneau
-      queue.forEach(sessionItem => {
-        if (sessionItem.remaining <= 0) return;
-        if (usedCourses.has(sessionItem.courseId)) return;
-        if (usedGroups.has(sessionItem.groupName)) return;
-        if (assignedThisSlot.length >= groups.length) return;
-
-        assignedThisSlot.push(sessionItem);
-        usedCourses.add(sessionItem.courseId);
-        usedGroups.add(sessionItem.groupName);
-      });
-
-      // on remplit l'affichage groupe par groupe
-      groups.forEach(group => {
-        const assigned = assignedThisSlot.find(a => a.groupName === group.name);
-
-        if (assigned) {
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: assigned.courseId,
-            lecon: assigned.lecon,
-            duree: 30
-          });
-
-          assigned.remaining -= 30;
-        } else {
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: "",
-            lecon: "à dispo des instructeurs",
-            duree: 30
-          });
+      // on prend au maximum une séance active par cours
+      const activeSessions = [];
+      courseIds.forEach(courseId => {
+        const nextSession = buckets[courseId].find(s => s.remaining > 0);
+        if (nextSession) {
+          activeSessions.push(nextSession);
         }
       });
 
-      // rotation : les séances servies passent à la fin si elles ne sont pas finies
-      const assignedIds = new Set(assignedThisSlot.map(a => a.sessionId));
+      // limiter au nombre de groupes
+      const selectedSessions = activeSessions.slice(0, groups.length);
 
-      const notAssigned = queue.filter(s => s.remaining > 0 && !assignedIds.has(s.sessionId));
-      const assignedRemaining = queue.filter(s => s.remaining > 0 && assignedIds.has(s.sessionId));
+      // créer les affectations de cette "vague"
+      const waveAssignments = rotatedGroups.map((group, idx) => {
+        return {
+          groupName: group.name,
+          session: selectedSessions[idx] || null
+        };
+      });
 
-      queue = notAssigned.concat(assignedRemaining);
+      // durée de la vague = jusqu'à la fin de toutes les séances sélectionnées
+      while (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
+        if (dayIndex >= openDays.length) break;
 
-      currentMinutes += 30;
+        nextSlot();
+        if (dayIndex >= openDays.length) break;
+
+        dayIndex = findNextValidDayIndex(dayIndex, batchJour);
+        if (dayIndex >= openDays.length) break;
+
+        const start = currentMinutes;
+        const end = currentMinutes + 30;
+
+        waveAssignments.forEach(assignment => {
+          if (assignment.session && assignment.session.remaining > 0) {
+            result.push({
+              date: openDays[dayIndex].dateFr,
+              time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+              groupe: assignment.groupName,
+              id: assignment.session.courseId,
+              lecon: assignment.session.lecon,
+              duree: 30
+            });
+
+            assignment.session.remaining -= 30;
+          } else {
+            result.push({
+              date: openDays[dayIndex].dateFr,
+              time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+              groupe: assignment.groupName,
+              id: "",
+              lecon: "à dispo des instructeurs",
+              duree: 30
+            });
+          }
+        });
+
+        currentMinutes += 30;
+      }
+
+      rotationOffset = (rotationOffset + 1) % groups.length;
     }
   }
 

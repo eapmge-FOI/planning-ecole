@@ -80,6 +80,26 @@
 },
 
 {
+  "id":"SPN1",
+  "branche":"Sécurité",
+  "sous_branche":"Sécurité personnelle",
+  "type":"pratique",
+  "lecon":"Techniques de menottage",
+  "duree":120,
+  "participants":12,
+  "encadrants":1,
+  "division":"Oui",
+  "simultane":"Non",
+  "ordre_lecon":0,
+  "apres_cours_id":[],
+  "avant_cours_id":[],
+  "delai_max_valeur":null,
+  "delai_max_unite":null,
+  "max_par_semaine":null,
+  "jour_specifique":"mardi"
+}
+
+{
 "id":"AS1",
 "branche":"Administration",
 "sous_branche":"Assermentation",

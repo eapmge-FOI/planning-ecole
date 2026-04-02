@@ -583,6 +583,11 @@ function buildRealSessions(courses, groups, nombreAspirants) {
   const sessions = [];
 
   courses.forEach(course => {
+    if (course.id === "MS1") {
+      // Le débriefing sera injecté plus tard en fin de vendredi
+      return;
+    }
+
     if (course.id === "AS1") {
       sessions.push({
         sessionId: `${course.id}-FIXE`,
@@ -591,7 +596,8 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         jour_specifique: null,
         duree: course.duree,
         mode: "fixed_full_day",
-        label: "date assermentation"
+        label: "date assermentation",
+        max_par_semaine: course.max_par_semaine ?? null
       });
       return;
     }
@@ -604,7 +610,8 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "classe_entiere",
-        label: "classe entière"
+        label: "classe entière",
+        max_par_semaine: course.max_par_semaine ?? null
       });
       return;
     }
@@ -621,7 +628,8 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         duree: course.duree,
         mode: "simultane",
         groups: plannedGroups.map(g => g.name),
-        label: plannedGroups.map(g => g.name).join(", ")
+        label: plannedGroups.map(g => g.name).join(", "),
+        max_par_semaine: course.max_par_semaine ?? null
       });
       return;
     }
@@ -635,7 +643,8 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         duree: course.duree,
         mode: "non_simultane",
         repetition: i,
-        label: `répétition ${i}`
+        label: `répétition ${i}`,
+        max_par_semaine: course.max_par_semaine ?? null
       });
     }
   });
@@ -699,6 +708,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   let sessionIndex = 0;
   let rotationOffset = 0;
 
+  const weekUsage = {};
+
+  function addWeekUsage(courseId, isoWeek) {
+    if (!weekUsage[courseId]) {
+      weekUsage[courseId] = {};
+    }
+    if (!weekUsage[courseId][isoWeek]) {
+      weekUsage[courseId][isoWeek] = 0;
+    }
+    weekUsage[courseId][isoWeek] += 1;
+  }
+
+  function getWeekUsage(courseId, isoWeek) {
+    return weekUsage[courseId]?.[isoWeek] || 0;
+  }
+
+  function getIsoWeekForOpenDay(index) {
+    if (index < 0 || index >= openDays.length) return null;
+    return getWeekKeyFromISO(openDays[index].iso);
+  }
+
   function nextSlot() {
     if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
       currentMinutes = 13 * 60 + 30;
@@ -735,6 +765,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return idx;
   }
 
+  function findNextValidDayIndexWithWeeklyLimit(startIndex, jourSpecifique, courseId, maxParSemaine) {
+    let idx = findNextValidDayIndex(startIndex, jourSpecifique);
+
+    if (!maxParSemaine) {
+      return idx;
+    }
+
+    while (idx < openDays.length) {
+      const isoWeek = getIsoWeekForOpenDay(idx);
+      const used = getWeekUsage(courseId, isoWeek);
+
+      if (used < maxParSemaine) {
+        return idx;
+      }
+
+      idx = findNextValidDayIndex(idx + 1, jourSpecifique);
+    }
+
+    return idx;
+  }
+
   function getRemainingTeachMinutesToday(fromMinutes) {
     if (fromMinutes < 12 * 60) {
       return (12 * 60 - fromMinutes) + (17 * 60 + 30 - (13 * 60 + 30));
@@ -747,8 +798,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return 0;
   }
 
-  function ensureSessionFitsToday(durationMinutes, jourSpecifique) {
-    dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+  function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine) {
+    dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
 
     if (dayIndex >= openDays.length) return false;
 
@@ -758,15 +809,15 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     if (currentMinutes >= 17 * 60 + 30) {
       moveToNextDay();
-      dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+      dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
       if (dayIndex >= openDays.length) return false;
     }
 
-    let available = getRemainingTeachMinutesToday(currentMinutes);
+    const available = getRemainingTeachMinutesToday(currentMinutes);
 
     if (durationMinutes > available) {
       moveToNextDay();
-      dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+      dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
       if (dayIndex >= openDays.length) return false;
     }
 
@@ -782,48 +833,55 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   }
 
   function findDayIndexByIso(isoDate) {
-  return allDays.findIndex(day => day.iso === isoDate);
-}
+    return allDays.findIndex(day => day.iso === isoDate);
+  }
 
   while (sessionIndex < sessions.length) {
     const session = sessions[sessionIndex];
 
     // CAS 0 : assermentation à date fixe, journée complète
-if (session.mode === "fixed_full_day") {
-  const assermentationInput = document.getElementById("assermentationInput");
-  const fixedDate = assermentationInput ? assermentationInput.value : null;
+    if (session.mode === "fixed_full_day") {
+      const assermentationInput = document.getElementById("assermentationInput");
+      const fixedDate = assermentationInput ? assermentationInput.value : null;
 
-  if (fixedDate) {
-    const fixedDayIndex = findDayIndexByIso(fixedDate);
+      if (fixedDate) {
+        const fixedDayIndex = findDayIndexByIso(fixedDate);
 
-    if (fixedDayIndex >= 0) {
-      const fixedDay = allDays[fixedDayIndex];
+        if (fixedDayIndex >= 0) {
+          const fixedDay = allDays[fixedDayIndex];
 
-      const blocks = [
-        ["08:00", "12:00", 240],
-        ["13:30", "17:30", 240]
-      ];
+          const blocks = [
+            ["08:00", "12:00", 240],
+            ["13:30", "17:30", 240]
+          ];
 
-      blocks.forEach(block => {
-        result.push({
-          date: fixedDay.dateFr,
-          time: `${block[0]}-${block[1]}`,
-          groupe: "classe entière",
-          id: session.courseId,
-          lecon: session.lecon,
-          duree: block[2]
-        });
-      });
+          blocks.forEach(block => {
+            result.push({
+              date: fixedDay.dateFr,
+              time: `${block[0]}-${block[1]}`,
+              groupe: "classe entière",
+              id: session.courseId,
+              lecon: session.lecon,
+              duree: block[2]
+            });
+          });
+        }
+      }
+
+      sessionIndex++;
+      continue;
     }
-  }
-
-  sessionIndex++;
-  continue;
-}
 
     // CAS 1 : classe entière
     if (session.mode === "classe_entiere") {
-      if (!ensureSessionFitsToday(session.duree, session.jour_specifique)) break;
+      if (!ensureSessionFitsToday(session.duree, session.jour_specifique, session.courseId, session.max_par_semaine)) {
+        break;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      if (session.max_par_semaine) {
+        addWeekUsage(session.courseId, isoWeek);
+      }
 
       let remaining = session.duree;
 
@@ -859,7 +917,14 @@ if (session.mode === "fixed_full_day") {
 
     // CAS 2 : simultané
     if (session.mode === "simultane") {
-      if (!ensureSessionFitsToday(session.duree, session.jour_specifique)) break;
+      if (!ensureSessionFitsToday(session.duree, session.jour_specifique, session.courseId, session.max_par_semaine)) {
+        break;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      if (session.max_par_semaine) {
+        addWeekUsage(session.courseId, isoWeek);
+      }
 
       let remaining = session.duree;
 
@@ -925,6 +990,7 @@ if (session.mode === "fixed_full_day") {
       const rotatedGroups = getRotatedGroups();
 
       const activeSessions = [];
+
       courseIds.forEach(courseId => {
         const nextSession = buckets[courseId].find(s => s.remaining > 0);
         if (nextSession) {
@@ -933,6 +999,9 @@ if (session.mode === "fixed_full_day") {
       });
 
       const selectedSessions = activeSessions.slice(0, groups.length);
+
+      const representativeCourse = selectedSessions[0]?.courseId || null;
+      const representativeMax = selectedSessions[0]?.max_par_semaine || null;
 
       const waveAssignments = rotatedGroups.map((group, idx) => {
         return {
@@ -950,7 +1019,16 @@ if (session.mode === "fixed_full_day") {
         break;
       }
 
-      if (!ensureSessionFitsToday(waveDuration, batchJour)) break;
+      if (!ensureSessionFitsToday(waveDuration, batchJour, representativeCourse, representativeMax)) {
+        break;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      selectedSessions.forEach(s => {
+        if (s.max_par_semaine) {
+          addWeekUsage(s.courseId, isoWeek);
+        }
+      });
 
       while (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
         if (dayIndex >= openDays.length) break;
@@ -995,9 +1073,46 @@ if (session.mode === "fixed_full_day") {
     }
   }
 
+  // Injection du débriefing en dernière plage du vendredi
+  const debriefCourse = courses.find(c => c.id === "MS1");
+  if (debriefCourse) {
+    const fridayDays = openDays.filter(day => day.jour.toLowerCase() === "vendredi");
+
+    fridayDays.forEach(day => {
+      const sameDayRows = result.filter(r => r.date === day.dateFr);
+
+      let latestEnd = "16:30";
+
+      if (sameDayRows.length > 0) {
+        sameDayRows.forEach(r => {
+          const end = r.time.split("-")[1];
+          if (end > latestEnd) {
+            latestEnd = end;
+          }
+        });
+      }
+
+      let startTime = "16:30";
+      let endTime = "17:30";
+
+      if (latestEnd > "16:30") {
+        startTime = "17:30";
+        endTime = "18:30";
+      }
+
+      result.push({
+        date: day.dateFr,
+        time: `${startTime}-${endTime}`,
+        groupe: "classe entière",
+        id: debriefCourse.id,
+        lecon: debriefCourse.lecon,
+        duree: 60
+      });
+    });
+  }
+
   return result;
 }
-
 function renderPlanning(planning) {
   const tbody = document.querySelector("#planningTable tbody");
   if (!tbody) return;

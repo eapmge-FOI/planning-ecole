@@ -590,8 +590,7 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         lecon: course.lecon,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
-        mode: "classe_entiere",
-        groupName: "classe entière"
+        mode: "classe_entiere"
       });
       return;
     }
@@ -612,17 +611,17 @@ function buildRealSessions(courses, groups, nombreAspirants) {
       return;
     }
 
-    plannedGroups.forEach(group => {
+    for (let i = 1; i <= requiredGroups; i++) {
       sessions.push({
-        sessionId: `${course.id}-${group.name}`,
+        sessionId: `${course.id}-REP${i}`,
         courseId: course.id,
         lecon: course.lecon,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "non_simultane",
-        groupName: group.name
+        repetition: i
       });
-    });
+    }
   });
 
   return sessions;

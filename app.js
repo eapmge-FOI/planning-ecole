@@ -797,14 +797,16 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       sessions[sessionIndex].mode === "non_simultane" &&
       (sessions[sessionIndex].jour_specifique || "") === batchJour
     ) {
-      batch.push(sessions[sessionIndex]);
+      batch.push({
+        ...sessions[sessionIndex],
+        remaining: sessions[sessionIndex].duree
+      });
       sessionIndex++;
     }
 
-    const buckets = createCourseBuckets(batch);
-    const courseIds = Object.keys(buckets);
+    let queue = [...batch];
 
-    while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
+    while (queue.some(s => s.remaining > 0)) {
       if (dayIndex >= openDays.length) break;
 
       nextSlot();
@@ -816,21 +818,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       const start = currentMinutes;
       const end = currentMinutes + 30;
 
-      // IMPORTANT :
-      // on ne prend qu'une seule répétition par cours pour ce créneau
-      const activeSessions = [];
+      const usedCourses = new Set();
+      const usedGroups = new Set();
+      const assignedThisSlot = [];
 
-      courseIds.forEach(courseId => {
-        const nextSession = buckets[courseId].find(s => s.remaining > 0);
-        if (nextSession) {
-          activeSessions.push(nextSession);
-        }
+      // on sélectionne des séances compatibles pour ce créneau
+      queue.forEach(sessionItem => {
+        if (sessionItem.remaining <= 0) return;
+        if (usedCourses.has(sessionItem.courseId)) return;
+        if (usedGroups.has(sessionItem.groupName)) return;
+        if (assignedThisSlot.length >= groups.length) return;
+
+        assignedThisSlot.push(sessionItem);
+        usedCourses.add(sessionItem.courseId);
+        usedGroups.add(sessionItem.groupName);
       });
 
-      groups.forEach((group, idx) => {
-        const assigned = activeSessions[idx];
+      // on remplit l'affichage groupe par groupe
+      groups.forEach(group => {
+        const assigned = assignedThisSlot.find(a => a.groupName === group.name);
 
-        if (assigned && assigned.remaining > 0) {
+        if (assigned) {
           result.push({
             date: openDays[dayIndex].dateFr,
             time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
@@ -852,6 +860,14 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
           });
         }
       });
+
+      // rotation : les séances servies passent à la fin si elles ne sont pas finies
+      const assignedIds = new Set(assignedThisSlot.map(a => a.sessionId));
+
+      const notAssigned = queue.filter(s => s.remaining > 0 && !assignedIds.has(s.sessionId));
+      const assignedRemaining = queue.filter(s => s.remaining > 0 && assignedIds.has(s.sessionId));
+
+      queue = notAssigned.concat(assignedRemaining);
 
       currentMinutes += 30;
     }

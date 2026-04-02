@@ -704,10 +704,6 @@ function renderGroups(groups) {
   });
 }
 
-function getOpenDays(calendarDays) {
-  return calendarDays.filter(day => day.status === "ouvrable");
-}
-
 function minutesToTimeString(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -881,26 +877,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   });
 
   return result;
-}
-
-function renderPlanning(planning) {
-  const tbody = document.querySelector("#planningTable tbody");
-  tbody.innerHTML = "";
-
-  planning.forEach(row => {
-    const html = `
-      <tr>
-        <td>${row.date}</td>
-        <td>${row.time}</td>
-        <td>${row.groupe}</td>
-        <td>${row.id}</td>
-        <td>${row.lecon}</td>
-        <td>${row.duree}</td>
-      </tr>
-    `;
-
-    tbody.innerHTML += html;
-  });
 }
 
 async function loadData() {

@@ -589,6 +589,86 @@ function getGroupCompatibleCourses(courses, completedIds, excludedIds = []) {
   });
 }
 
+function buildRealSessions(courses, groups, nombreAspirants) {
+  const sessions = [];
+
+  courses.forEach(course => {
+    if (course.division === "Non") {
+      sessions.push({
+        sessionId: `${course.id}-CE`,
+        courseId: course.id,
+        lecon: course.lecon,
+        type: course.type,
+        jour_specifique: course.jour_specifique,
+        duree: course.duree,
+        mode: "classe_entiere",
+        groupName: "classe entière"
+      });
+      return;
+    }
+
+    const requiredGroups = Math.ceil(nombreAspirants / course.participants);
+    const plannedGroups = groups.slice(0, requiredGroups);
+
+    if (course.simultane === "Oui") {
+      sessions.push({
+        sessionId: `${course.id}-SIM`,
+        courseId: course.id,
+        lecon: course.lecon,
+        type: course.type,
+        jour_specifique: course.jour_specifique,
+        duree: course.duree,
+        mode: "simultane",
+        groups: plannedGroups.map(g => g.name)
+      });
+      return;
+    }
+
+    plannedGroups.forEach(group => {
+      sessions.push({
+        sessionId: `${course.id}-${group.name}`,
+        courseId: course.id,
+        lecon: course.lecon,
+        type: course.type,
+        jour_specifique: course.jour_specifique,
+        duree: course.duree,
+        mode: "non_simultane",
+        groupName: group.name
+      });
+    });
+  });
+
+  return sessions;
+}
+
+function renderRealSessionsTable(sessions) {
+  const tbody = document.querySelector("#realSessionsTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  sessions.forEach(session => {
+    const cible =
+      session.mode === "classe_entiere"
+        ? "classe entière"
+        : session.mode === "simultane"
+        ? session.groups.join(", ")
+        : session.groupName;
+
+    const row = `
+      <tr>
+        <td>${session.sessionId}</td>
+        <td>${session.courseId}</td>
+        <td>${session.lecon}</td>
+        <td>${session.mode}</td>
+        <td>${cible}</td>
+        <td>${session.duree}</td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+}
+
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const ordered = simulateExecution(courses).filter(x => x.id !== "---");
   const openDays = getOpenDays(calendarDays);

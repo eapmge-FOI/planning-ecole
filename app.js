@@ -733,9 +733,31 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     }
   }
 
+  function findNextValidDayIndex(startIndex, course) {
+    let idx = startIndex;
+
+    while (idx < openDays.length) {
+      const day = openDays[idx];
+
+      if (!course.jour_specifique) {
+        return idx;
+      }
+
+      if (day.jour.toLowerCase() === course.jour_specifique.toLowerCase()) {
+        return idx;
+      }
+
+      idx++;
+    }
+
+    return idx;
+  }
+
   ordered.forEach(item => {
     const course = courses.find(c => c.id === item.id);
     if (!course) return;
+
+    dayIndex = findNextValidDayIndex(dayIndex, course);
 
     // CAS 1 : pas de division => classe entière
     if (course.division === "Non") {
@@ -746,6 +768,9 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
         nextSlot();
 
+        if (dayIndex >= openDays.length) break;
+
+        dayIndex = findNextValidDayIndex(dayIndex, course);
         if (dayIndex >= openDays.length) break;
 
         const slot = Math.min(30, remaining);
@@ -768,7 +793,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       return;
     }
 
-    // CAS 2 et 3 : division = Oui
     let requiredGroups = Math.ceil(nombreAspirants / course.participants);
     const plannedGroups = groups.slice(0, requiredGroups);
 
@@ -781,6 +805,9 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
         nextSlot();
 
+        if (dayIndex >= openDays.length) break;
+
+        dayIndex = findNextValidDayIndex(dayIndex, course);
         if (dayIndex >= openDays.length) break;
 
         const slot = Math.min(30, remaining);
@@ -807,6 +834,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     // CAS 3 : division Oui + simultané Non
     plannedGroups.forEach(group => {
+      dayIndex = findNextValidDayIndex(dayIndex, course);
+
       let remaining = course.duree;
 
       while (remaining > 0) {
@@ -816,11 +845,13 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
         if (dayIndex >= openDays.length) break;
 
+        dayIndex = findNextValidDayIndex(dayIndex, course);
+        if (dayIndex >= openDays.length) break;
+
         const slot = Math.min(30, remaining);
         const start = currentMinutes;
         const end = currentMinutes + slot;
 
-        // groupe qui suit le cours
         result.push({
           date: openDays[dayIndex].dateFr,
           time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
@@ -830,7 +861,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
           duree: slot
         });
 
-        // autres groupes à dispo pour l'instant
         groups
           .filter(otherGroup => otherGroup.name !== group.name)
           .forEach(otherGroup => {

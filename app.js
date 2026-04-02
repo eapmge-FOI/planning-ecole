@@ -722,33 +722,66 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   let dayIndex = 0;
   let currentMinutes = 8 * 60;
 
+  function nextSlot() {
+    if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+      currentMinutes = 13 * 60 + 30;
+    }
+
+    if (currentMinutes >= 17 * 60 + 30) {
+      dayIndex++;
+      currentMinutes = 8 * 60;
+    }
+  }
+
   ordered.forEach(item => {
     const course = courses.find(c => c.id === item.id);
     if (!course) return;
 
-    let requiredGroups = 1;
+    // CAS 1 : pas de division => classe entière
+    if (course.division === "Non") {
+      let remaining = course.duree;
 
-    if (course.division === "Oui") {
-      requiredGroups = Math.ceil(nombreAspirants / course.participants);
+      while (remaining > 0) {
+        if (dayIndex >= openDays.length) break;
+
+        nextSlot();
+
+        if (dayIndex >= openDays.length) break;
+
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
+        result.push({
+          date: openDays[dayIndex].dateFr,
+          time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+          groupe: "classe entière",
+          id: course.id,
+          lecon: course.lecon,
+          duree: slot
+        });
+
+        currentMinutes += slot;
+        remaining -= slot;
+      }
+
+      return;
     }
 
+    // CAS 2 et 3 : division = Oui
+    let requiredGroups = Math.ceil(nombreAspirants / course.participants);
     const plannedGroups = groups.slice(0, requiredGroups);
 
+    // CAS 2 : division Oui + simultané Oui
     if (course.simultane === "Oui") {
       let remaining = course.duree;
 
       while (remaining > 0) {
         if (dayIndex >= openDays.length) break;
 
-        if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
-          currentMinutes = 13 * 60 + 30;
-        }
+        nextSlot();
 
-        if (currentMinutes >= 17 * 60 + 30) {
-          dayIndex++;
-          currentMinutes = 8 * 60;
-          continue;
-        }
+        if (dayIndex >= openDays.length) break;
 
         const slot = Math.min(30, remaining);
         const start = currentMinutes;
@@ -768,54 +801,53 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         currentMinutes += slot;
         remaining -= slot;
       }
-    } else {
-      plannedGroups.forEach(group => {
-        let remaining = course.duree;
 
-        while (remaining > 0) {
-          if (dayIndex >= openDays.length) break;
+      return;
+    }
 
-          if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
-            currentMinutes = 13 * 60 + 30;
-          }
+    // CAS 3 : division Oui + simultané Non
+    plannedGroups.forEach(group => {
+      let remaining = course.duree;
 
-          if (currentMinutes >= 17 * 60 + 30) {
-            dayIndex++;
-            currentMinutes = 8 * 60;
-            continue;
-          }
+      while (remaining > 0) {
+        if (dayIndex >= openDays.length) break;
 
-          const slot = Math.min(30, remaining);
-          const start = currentMinutes;
-          const end = currentMinutes + slot;
+        nextSlot();
 
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: course.id,
-            lecon: course.lecon,
-            duree: slot
+        if (dayIndex >= openDays.length) break;
+
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
+        // groupe qui suit le cours
+        result.push({
+          date: openDays[dayIndex].dateFr,
+          time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+          groupe: group.name,
+          id: course.id,
+          lecon: course.lecon,
+          duree: slot
+        });
+
+        // autres groupes à dispo pour l'instant
+        groups
+          .filter(otherGroup => otherGroup.name !== group.name)
+          .forEach(otherGroup => {
+            result.push({
+              date: openDays[dayIndex].dateFr,
+              time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+              groupe: otherGroup.name,
+              id: "",
+              lecon: "à dispo des instructeurs",
+              duree: slot
+            });
           });
 
-          groups
-            .filter(otherGroup => otherGroup.name !== group.name)
-            .forEach(otherGroup => {
-              result.push({
-                date: openDays[dayIndex].dateFr,
-                time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-                groupe: otherGroup.name,
-                id: "",
-                lecon: "à dispo des instructeurs",
-                duree: slot
-              });
-            });
-
-          currentMinutes += slot;
-          remaining -= slot;
-        }
-      });
-    }
+        currentMinutes += slot;
+        remaining -= slot;
+      }
+    });
   });
 
   return result;

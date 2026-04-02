@@ -775,6 +775,9 @@ async function loadData() {
   renderAvailabilityTable(courses);
   renderSimulation(courses);
 
+  const planning=buildSimplePlanning(courses,calendarDays);
+
+renderPlanning(planning);
   const capaciteHeuresStandard = capacityStats.standardHours;
   const capaciteHeuresRealiste = capacityStats.realisticCapacity;
   const ecartStandard = (capaciteHeuresStandard - totalHours).toFixed(1);

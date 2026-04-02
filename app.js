@@ -1004,10 +1004,16 @@ function renderPlanning(planning) {
 
   tbody.innerHTML = "";
 
+  function frDateToSortable(dateFr) {
+    const [day, month, year] = dateFr.split(".");
+    return `${year}-${month}-${day}`;
+  }
+
   const parsed = planning.map(row => {
     const [startTime, endTime] = row.time.split("-");
     return {
       date: row.date,
+      sortableDate: frDateToSortable(row.date),
       startTime,
       endTime,
       groupe: row.groupe,
@@ -1018,7 +1024,7 @@ function renderPlanning(planning) {
   });
 
   parsed.sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.sortableDate !== b.sortableDate) return a.sortableDate.localeCompare(b.sortableDate);
     if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
     if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
     if (a.id !== b.id) return a.id.localeCompare(b.id);
@@ -1032,7 +1038,7 @@ function renderPlanning(planning) {
 
     if (
       last &&
-      last.date === row.date &&
+      last.sortableDate === row.sortableDate &&
       last.groupe === row.groupe &&
       last.id === row.id &&
       last.lecon === row.lecon &&
@@ -1043,6 +1049,7 @@ function renderPlanning(planning) {
     } else {
       merged.push({
         date: row.date,
+        sortableDate: row.sortableDate,
         startTime: row.startTime,
         endTime: row.endTime,
         groupe: row.groupe,
@@ -1054,7 +1061,7 @@ function renderPlanning(planning) {
   });
 
   merged.sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.sortableDate !== b.sortableDate) return a.sortableDate.localeCompare(b.sortableDate);
     if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
     if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
     if (a.id !== b.id) return a.id.localeCompare(b.id);

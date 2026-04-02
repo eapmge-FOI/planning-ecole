@@ -245,14 +245,16 @@ function minutesToTimeString(minutes) {
 
 function renderBaseCalendar(calendarDays) {
   const tbody = document.querySelector("#calendarTable tbody");
-  if (!tbody) return {
-    countOuvrables: 0,
-    countWeekend: 0,
-    countFeries: 0,
-    countVacances: 0,
-    countStages: 0,
-    countAssermentation: 0
-  };
+  if (!tbody) {
+    return {
+      countOuvrables: 0,
+      countWeekend: 0,
+      countFeries: 0,
+      countVacances: 0,
+      countStages: 0,
+      countAssermentation: 0
+    };
+  }
 
   tbody.innerHTML = "";
 
@@ -532,7 +534,6 @@ function renderSimulation(courses) {
         <td>${item.reason}</td>
       </tr>
     `;
-
     tbody.innerHTML += row;
   });
 }
@@ -578,17 +579,6 @@ function renderGroups(groups) {
   });
 }
 
-function getGroupCompatibleCourses(courses, completedIds, excludedIds = []) {
-  return courses.filter(course => {
-    if (completedIds.has(course.id)) return false;
-    if (excludedIds.includes(course.id)) return false;
-    if (course.division !== "Oui") return false;
-    if (course.simultane !== "Non") return false;
-    if (!dependenciesSatisfied(course, completedIds)) return false;
-    return true;
-  });
-}
-
 function buildRealSessions(courses, groups, nombreAspirants) {
   const sessions = [];
 
@@ -598,7 +588,6 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         sessionId: `${course.id}-CE`,
         courseId: course.id,
         lecon: course.lecon,
-        type: course.type,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "classe_entiere",
@@ -615,7 +604,6 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         sessionId: `${course.id}-SIM`,
         courseId: course.id,
         lecon: course.lecon,
-        type: course.type,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "simultane",
@@ -629,7 +617,6 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         sessionId: `${course.id}-${group.name}`,
         courseId: course.id,
         lecon: course.lecon,
-        type: course.type,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "non_simultane",
@@ -764,120 +751,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   return result;
 }
 
-    const requiredGroups = Math.ceil(nombreAspirants / course.participants);
-    const plannedGroups = groups.slice(0, requiredGroups);
-
-    // Cas 2 : division Oui + simultané Oui
-    if (course.simultane === "Oui") {
-      let remaining = course.duree;
-
-      while (remaining > 0) {
-        if (dayIndex >= openDays.length) break;
-
-        nextSlot();
-        if (dayIndex >= openDays.length) break;
-
-        dayIndex = findNextValidDayIndex(dayIndex, course);
-        if (dayIndex >= openDays.length) break;
-
-        const slot = Math.min(30, remaining);
-        const start = currentMinutes;
-        const end = currentMinutes + slot;
-
-        plannedGroups.forEach(group => {
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: course.id,
-            lecon: course.lecon,
-            duree: slot
-          });
-        });
-
-        currentMinutes += slot;
-        remaining -= slot;
-      }
-
-      return;
-    }
-
-// Cas 3 : division Oui + simultané Non
-const completedIds = new Set(result.map(r => r.id).filter(Boolean));
-const otherCourses = getGroupCompatibleCourses(courses, completedIds, [course.id]);
-
-const activeAssignments = [];
-
-// le cours principal prend le premier groupe
-activeAssignments.push({
-  group: plannedGroups[0],
-  course: course,
-  remaining: course.duree
-});
-
-// on affecte d'autres cours compatibles aux autres groupes
-for (let i = 1; i < plannedGroups.length; i++) {
-  const nextCourse = otherCourses.shift();
-
-  if (nextCourse) {
-    activeAssignments.push({
-      group: plannedGroups[i],
-      course: nextCourse,
-      remaining: nextCourse.duree
-    });
-  } else {
-    activeAssignments.push({
-      group: plannedGroups[i],
-      course: null,
-      remaining: 0
-    });
-  }
-}
-
-// on fait avancer tout le paquet parallèle bloc par bloc
-while (activeAssignments.some(a => a.course && a.remaining > 0)) {
-  if (dayIndex >= openDays.length) break;
-
-  nextSlot();
-  if (dayIndex >= openDays.length) break;
-
-  dayIndex = findNextValidDayIndex(dayIndex, course);
-  if (dayIndex >= openDays.length) break;
-
-  const start = currentMinutes;
-  const end = currentMinutes + 30;
-
-  activeAssignments.forEach(assignment => {
-    if (assignment.course && assignment.remaining > 0) {
-      result.push({
-        date: openDays[dayIndex].dateFr,
-        time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-        groupe: assignment.group.name,
-        id: assignment.course.id,
-        lecon: assignment.course.lecon,
-        duree: 30
-      });
-
-      assignment.remaining -= 30;
-    } else {
-      result.push({
-        date: openDays[dayIndex].dateFr,
-        time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-        groupe: assignment.group.name,
-        id: "",
-        lecon: "à dispo des instructeurs",
-        duree: 30
-      });
-    }
-  });
-
-  currentMinutes += 30;
-}
-  });
-
-  return result;
-}
-
 function renderPlanning(planning) {
   const tbody = document.querySelector("#planningTable tbody");
   if (!tbody) return;
@@ -895,7 +768,6 @@ function renderPlanning(planning) {
         <td>${row.duree}</td>
       </tr>
     `;
-
     tbody.innerHTML += html;
   });
 }
@@ -985,7 +857,6 @@ async function loadData() {
           <td>${contrainte}</td>
         </tr>
       `;
-
       tbody.innerHTML += row;
     });
   }
@@ -1016,7 +887,7 @@ async function loadData() {
   renderGroups(groups);
 
   const realSessions = buildRealSessions(courses, groups, nombreAspirants);
-renderRealSessionsTable(realSessions);
+  renderRealSessionsTable(realSessions);
 
   const planning = buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants);
   renderPlanning(planning);

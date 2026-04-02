@@ -655,6 +655,35 @@ function renderRealSessionsTable(sessions) {
   });
 }
 
+function createRoundRobinSessionQueue(batchSessions) {
+  const groupsByCourse = {};
+
+  batchSessions.forEach(session => {
+    if (!groupsByCourse[session.courseId]) {
+      groupsByCourse[session.courseId] = [];
+    }
+    groupsByCourse[session.courseId].push({ ...session, remaining: session.duree });
+  });
+
+  const courseIds = Object.keys(groupsByCourse);
+  const queue = [];
+
+  let stillHasItems = true;
+
+  while (stillHasItems) {
+    stillHasItems = false;
+
+    courseIds.forEach(courseId => {
+      if (groupsByCourse[courseId].length > 0) {
+        queue.push(groupsByCourse[courseId].shift());
+        stillHasItems = true;
+      }
+    });
+  }
+
+  return queue;
+}
+
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const openDays = getOpenDays(calendarDays);
   const sessions = buildRealSessions(courses, groups, nombreAspirants);

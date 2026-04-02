@@ -583,6 +583,19 @@ function buildRealSessions(courses, groups, nombreAspirants) {
   const sessions = [];
 
   courses.forEach(course => {
+    if (course.id === "AS1") {
+      sessions.push({
+        sessionId: `${course.id}-FIXE`,
+        courseId: course.id,
+        lecon: course.lecon,
+        jour_specifique: null,
+        duree: course.duree,
+        mode: "fixed_full_day",
+        label: "date assermentation"
+      });
+      return;
+    }
+
     if (course.division === "Non") {
       sessions.push({
         sessionId: `${course.id}-CE`,

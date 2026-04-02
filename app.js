@@ -691,6 +691,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   const result = [];
   let dayIndex = 0;
   let currentMinutes = 8 * 60;
+  let sessionIndex = 0;
 
   function nextSlot() {
     if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
@@ -723,24 +724,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return idx;
   }
 
-  sessions.forEach(session => {
-    dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
-    let remaining = session.duree;
+  while (sessionIndex < sessions.length) {
+    const session = sessions[sessionIndex];
 
-    while (remaining > 0) {
-      if (dayIndex >= openDays.length) break;
-
-      nextSlot();
-      if (dayIndex >= openDays.length) break;
-
+    // CAS 1 : classe entière
+    if (session.mode === "classe_entiere") {
       dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
-      if (dayIndex >= openDays.length) break;
+      let remaining = session.duree;
 
-      const slot = Math.min(30, remaining);
-      const start = currentMinutes;
-      const end = currentMinutes + slot;
+      while (remaining > 0) {
+        if (dayIndex >= openDays.length) break;
 
-      if (session.mode === "classe_entiere") {
+        nextSlot();
+        if (dayIndex >= openDays.length) break;
+
+        dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        if (dayIndex >= openDays.length) break;
+
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
         result.push({
           date: openDays[dayIndex].dateFr,
           time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
@@ -749,7 +753,33 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
           lecon: session.lecon,
           duree: slot
         });
-      } else if (session.mode === "simultane") {
+
+        currentMinutes += slot;
+        remaining -= slot;
+      }
+
+      sessionIndex++;
+      continue;
+    }
+
+    // CAS 2 : simultané
+    if (session.mode === "simultane") {
+      dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+      let remaining = session.duree;
+
+      while (remaining > 0) {
+        if (dayIndex >= openDays.length) break;
+
+        nextSlot();
+        if (dayIndex >= openDays.length) break;
+
+        dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        if (dayIndex >= openDays.length) break;
+
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
         session.groups.forEach(groupName => {
           result.push({
             date: openDays[dayIndex].dateFr,
@@ -760,44 +790,87 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
             duree: slot
           });
         });
-      } else {
-        result.push({
-          date: openDays[dayIndex].dateFr,
-          time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-          groupe: session.groupName,
-          id: session.courseId,
-          lecon: session.lecon,
-          duree: slot
-        });
+
+        currentMinutes += slot;
+        remaining -= slot;
       }
 
-      currentMinutes += slot;
-      remaining -= slot;
+      sessionIndex++;
+      continue;
     }
-  });
+
+    // CAS 3 : non simultané -> on regroupe toutes les séances non_simultane consécutives
+    const batchJour = session.jour_specifique || "";
+    const batch = [];
+
+    while (
+      sessionIndex < sessions.length &&
+      sessions[sessionIndex].mode === "non_simultane" &&
+      (sessions[sessionIndex].jour_specifique || "") === batchJour
+    ) {
+      batch.push(sessions[sessionIndex]);
+      sessionIndex++;
+    }
+
+    let workQueue = createRoundRobinSessionQueue(batch);
+
+    while (workQueue.some(s => s.remaining > 0)) {
+      if (dayIndex >= openDays.length) break;
+
+      nextSlot();
+      if (dayIndex >= openDays.length) break;
+
+      dayIndex = findNextValidDayIndex(dayIndex, batchJour);
+      if (dayIndex >= openDays.length) break;
+
+      const start = currentMinutes;
+      const end = currentMinutes + 30;
+
+      const assignments = [];
+      const waiting = [];
+
+      workQueue.forEach(sessionItem => {
+        if (sessionItem.remaining > 0 && assignments.length < groups.length) {
+          assignments.push(sessionItem);
+        } else {
+          waiting.push(sessionItem);
+        }
+      });
+
+      groups.forEach((group, idx) => {
+        const assigned = assignments[idx];
+
+        if (assigned && assigned.remaining > 0) {
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+            groupe: group.name,
+            id: assigned.courseId,
+            lecon: assigned.lecon,
+            duree: 30
+          });
+
+          assigned.remaining -= 30;
+        } else {
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+            groupe: group.name,
+            id: "",
+            lecon: "à dispo des instructeurs",
+            duree: 30
+          });
+        }
+      });
+
+      const unfinishedAssignments = assignments.filter(a => a.remaining > 0);
+      workQueue = waiting.concat(unfinishedAssignments);
+
+      currentMinutes += 30;
+    }
+  }
 
   return result;
-}
-
-function renderPlanning(planning) {
-  const tbody = document.querySelector("#planningTable tbody");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  planning.forEach(row => {
-    const html = `
-      <tr>
-        <td>${row.date}</td>
-        <td>${row.time}</td>
-        <td>${row.groupe}</td>
-        <td>${row.id}</td>
-        <td>${row.lecon}</td>
-        <td>${row.duree}</td>
-      </tr>
-    `;
-    tbody.innerHTML += html;
-  });
 }
 
 async function loadData() {

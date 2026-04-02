@@ -579,16 +579,231 @@ function renderGroups(groups) {
   });
 }
 
-function buildRealSessions(courses, groups, nombreAspirants) {
-  const sessions = [];
+function isAssermentationCourse(course) {
+  return (course.lecon || "").toUpperCase().includes("ASSERMENTATION");
+}
+
+function isDebriefCourse(course) {
+  return (course.lecon || "").toUpperCase().includes("DEBRIEF");
+}
+
+function computeLatestAllowedIso(startIso, value, unit) {
+  if (value === null || value === undefined || !unit) return null;
+
+  const d = new Date(startIso + "T00:00:00");
+  const u = String(unit).toLowerCase();
+
+  if (u.startsWith("jour")) {
+    d.setDate(d.getDate() + Number(value));
+  } else if (u.startsWith("semaine")) {
+    d.setDate(d.getDate() + Number(value) * 7);
+  } else if (u.startsWith("mois")) {
+    d.setMonth(d.getMonth() + Number(value));
+  } else {
+    return null;
+  }
+
+  return formatDateISO(d);
+}
+
+function validateCourses(courses) {
+  const errors = [];
+  const warnings = [];
+  const ids = new Set();
+  const validDays = new Set([
+    "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
+  ]);
 
   courses.forEach(course => {
-    if (course.id === "MS1") {
-      // Le débriefing sera injecté plus tard en fin de vendredi
+    if (!course.id || String(course.id).trim() === "") {
+      errors.push("Un cours a un ID vide.");
+    } else if (ids.has(course.id)) {
+      errors.push(`ID dupliqué: ${course.id}`);
+    } else {
+      ids.add(course.id);
+    }
+
+    if (!Number.isFinite(course.duree) || course.duree <= 0) {
+      errors.push(`Durée invalide pour ${course.id}`);
+    } else if (course.duree % 30 !== 0) {
+      warnings.push(`Durée non multiple de 30 minutes pour ${course.id}`);
+    }
+
+    if (!Number.isFinite(course.participants) || course.participants <= 0) {
+      errors.push(`Participants invalides pour ${course.id}`);
+    }
+
+    if (!Number.isFinite(course.encadrants) || course.encadrants < 0) {
+      errors.push(`Encadrants invalides pour ${course.id}`);
+    }
+
+    if (course.jour_specifique && !validDays.has(String(course.jour_specifique).toLowerCase())) {
+      errors.push(`jour_specifique invalide pour ${course.id}: ${course.jour_specifique}`);
+    }
+
+    if (
+      course.delai_max_valeur !== null &&
+      course.delai_max_valeur !== undefined &&
+      (!Number.isFinite(course.delai_max_valeur) || course.delai_max_valeur < 0)
+    ) {
+      errors.push(`delai_max_valeur invalide pour ${course.id}`);
+    }
+
+    if (
+      course.delai_max_unite &&
+      !["jour", "jours", "semaine", "semaines", "mois", "month", "months"].includes(String(course.delai_max_unite).toLowerCase())
+    ) {
+      warnings.push(`delai_max_unite non reconnue pour ${course.id}: ${course.delai_max_unite}`);
+    }
+  });
+
+  courses.forEach(course => {
+    (course.apres_cours_id || []).forEach(depId => {
+      if (!ids.has(depId)) {
+        errors.push(`${course.id} dépend de ${depId}, mais cet ID n'existe pas.`);
+      }
+    });
+
+    (course.avant_cours_id || []).forEach(depId => {
+      if (!ids.has(depId)) {
+        errors.push(`${course.id} a avant_cours_id ${depId}, mais cet ID n'existe pas.`);
+      }
+    });
+  });
+
+  // Détection simple de cycle sur apres_cours_id
+  const graph = {};
+  courses.forEach(course => {
+    graph[course.id] = course.apres_cours_id || [];
+  });
+
+  const visiting = new Set();
+  const visited = new Set();
+
+  function dfs(id, stack) {
+    if (visiting.has(id)) {
+      errors.push(`Cycle détecté dans les dépendances: ${[...stack, id].join(" -> ")}`);
+      return;
+    }
+    if (visited.has(id)) return;
+
+    visiting.add(id);
+    const nextIds = graph[id] || [];
+    nextIds.forEach(nextId => dfs(nextId, [...stack, id]));
+    visiting.delete(id);
+    visited.add(id);
+  }
+
+  Object.keys(graph).forEach(id => dfs(id, []));
+
+  return {
+    errors: [...new Set(errors)],
+    warnings: [...new Set(warnings)]
+  };
+}
+
+function renderValidationReport(report) {
+  const container = document.getElementById("validationReport");
+  if (!container) return;
+
+  let html = "";
+
+  if (report.errors.length === 0 && report.warnings.length === 0) {
+    html = `<p><b>Aucune erreur détectée.</b></p>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  if (report.errors.length > 0) {
+    html += `<h3>Erreurs bloquantes</h3><ul>`;
+    report.errors.forEach(item => {
+      html += `<li>${item}</li>`;
+    });
+    html += `</ul>`;
+  }
+
+  if (report.warnings.length > 0) {
+    html += `<h3>Avertissements</h3><ul>`;
+    report.warnings.forEach(item => {
+      html += `<li>${item}</li>`;
+    });
+    html += `</ul>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function sortCoursesForPlanning(courses, schoolStartIso) {
+  return [...courses].sort((a, b) => {
+    const aDebrief = isDebriefCourse(a) ? 1 : 0;
+    const bDebrief = isDebriefCourse(b) ? 1 : 0;
+    if (aDebrief !== bDebrief) return aDebrief - bDebrief;
+
+    const aAsser = isAssermentationCourse(a) ? 1 : 0;
+    const bAsser = isAssermentationCourse(b) ? 1 : 0;
+    if (aAsser !== bAsser) return aAsser - bAsser;
+
+    const aDeadline = computeLatestAllowedIso(schoolStartIso, a.delai_max_valeur, a.delai_max_unite) || "9999-12-31";
+    const bDeadline = computeLatestAllowedIso(schoolStartIso, b.delai_max_valeur, b.delai_max_unite) || "9999-12-31";
+    if (aDeadline !== bDeadline) return aDeadline.localeCompare(bDeadline);
+
+    const aHasDay = a.jour_specifique ? 1 : 0;
+    const bHasDay = b.jour_specifique ? 1 : 0;
+    if (aHasDay !== bHasDay) return bHasDay - aHasDay;
+
+    if (a.sous_branche === b.sous_branche) {
+      const ao = Number(a.ordre_lecon || 0);
+      const bo = Number(b.ordre_lecon || 0);
+
+      if (ao !== bo) {
+        if (ao === 0) return 1;
+        if (bo === 0) return -1;
+        return ao - bo;
+      }
+    }
+
+    return String(a.id).localeCompare(String(b.id));
+  });
+}
+
+function courseIsReady(course, completedCourseIds, courseMap) {
+  const deps = course.apres_cours_id || [];
+  if (deps.some(id => !completedCourseIds.has(id))) {
+    return false;
+  }
+
+  const currentOrder = Number(course.ordre_lecon || 0);
+  if (currentOrder > 0) {
+    const previousCourses = Object.values(courseMap).filter(other =>
+      other.sous_branche === course.sous_branche &&
+      Number(other.ordre_lecon || 0) > 0 &&
+      Number(other.ordre_lecon || 0) < currentOrder
+    );
+
+    if (previousCourses.some(c => !completedCourseIds.has(c.id))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function buildRealSessions(courses, groups, nombreAspirants, schoolStartIso) {
+  const sessions = [];
+  const sortedCourses = sortCoursesForPlanning(courses, schoolStartIso);
+
+  sortedCourses.forEach(course => {
+    const latestAllowedIso = computeLatestAllowedIso(
+      schoolStartIso,
+      course.delai_max_valeur,
+      course.delai_max_unite
+    );
+
+    if (isDebriefCourse(course)) {
       return;
     }
 
-    if (course.id === "AS1") {
+    if (isAssermentationCourse(course)) {
       sessions.push({
         sessionId: `${course.id}-FIXE`,
         courseId: course.id,
@@ -597,7 +812,11 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         duree: course.duree,
         mode: "fixed_full_day",
         label: "date assermentation",
-        max_par_semaine: course.max_par_semaine ?? null
+        max_par_semaine: course.max_par_semaine ?? null,
+        latestAllowedIso,
+        sous_branche: course.sous_branche,
+        ordre_lecon: course.ordre_lecon || 0,
+        apres_cours_id: course.apres_cours_id || []
       });
       return;
     }
@@ -611,7 +830,11 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         duree: course.duree,
         mode: "classe_entiere",
         label: "classe entière",
-        max_par_semaine: course.max_par_semaine ?? null
+        max_par_semaine: course.max_par_semaine ?? null,
+        latestAllowedIso,
+        sous_branche: course.sous_branche,
+        ordre_lecon: course.ordre_lecon || 0,
+        apres_cours_id: course.apres_cours_id || []
       });
       return;
     }
@@ -629,7 +852,11 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         mode: "simultane",
         groups: plannedGroups.map(g => g.name),
         label: plannedGroups.map(g => g.name).join(", "),
-        max_par_semaine: course.max_par_semaine ?? null
+        max_par_semaine: course.max_par_semaine ?? null,
+        latestAllowedIso,
+        sous_branche: course.sous_branche,
+        ordre_lecon: course.ordre_lecon || 0,
+        apres_cours_id: course.apres_cours_id || []
       });
       return;
     }
@@ -644,7 +871,11 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         mode: "non_simultane",
         repetition: i,
         label: `répétition ${i}`,
-        max_par_semaine: course.max_par_semaine ?? null
+        max_par_semaine: course.max_par_semaine ?? null,
+        latestAllowedIso,
+        sous_branche: course.sous_branche,
+        ordre_lecon: course.ordre_lecon || 0,
+        apres_cours_id: course.apres_cours_id || []
       });
     }
   });
@@ -700,7 +931,9 @@ function createCourseBuckets(batchSessions) {
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const openDays = getOpenDays(calendarDays);
   const allDays = calendarDays;
-  const sessions = buildRealSessions(courses, groups, nombreAspirants);
+  const schoolStartIso = calendarDays[0]?.iso;
+  const sessions = buildRealSessions(courses, groups, nombreAspirants, schoolStartIso);
+  const courseMap = Object.fromEntries(courses.map(c => [c.id, c]));
 
   const result = [];
   let dayIndex = 0;
@@ -709,14 +942,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   let rotationOffset = 0;
 
   const weekUsage = {};
+  const completedCourseIds = new Set();
+  const remainingMinutesByCourse = {};
+
+  sessions.forEach(session => {
+    if (!remainingMinutesByCourse[session.courseId]) {
+      remainingMinutesByCourse[session.courseId] = 0;
+    }
+    remainingMinutesByCourse[session.courseId] += session.duree;
+  });
+
+  function markCourseMinutes(courseId, minutes) {
+    if (remainingMinutesByCourse[courseId] === undefined) return;
+    remainingMinutesByCourse[courseId] -= minutes;
+    if (remainingMinutesByCourse[courseId] <= 0) {
+      completedCourseIds.add(courseId);
+    }
+  }
 
   function addWeekUsage(courseId, isoWeek) {
-    if (!weekUsage[courseId]) {
-      weekUsage[courseId] = {};
-    }
-    if (!weekUsage[courseId][isoWeek]) {
-      weekUsage[courseId][isoWeek] = 0;
-    }
+    if (!weekUsage[courseId]) weekUsage[courseId] = {};
+    if (!weekUsage[courseId][isoWeek]) weekUsage[courseId][isoWeek] = 0;
     weekUsage[courseId][isoWeek] += 1;
   }
 
@@ -751,13 +997,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     while (idx < openDays.length) {
       const day = openDays[idx];
 
-      if (!jourSpecifique) {
-        return idx;
-      }
-
-      if (day.jour.toLowerCase() === jourSpecifique.toLowerCase()) {
-        return idx;
-      }
+      if (!jourSpecifique) return idx;
+      if (day.jour.toLowerCase() === String(jourSpecifique).toLowerCase()) return idx;
 
       idx++;
     }
@@ -765,22 +1006,25 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return idx;
   }
 
-  function findNextValidDayIndexWithWeeklyLimit(startIndex, jourSpecifique, courseId, maxParSemaine) {
+  function findNextValidDayIndexWithConstraints(startIndex, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
     let idx = findNextValidDayIndex(startIndex, jourSpecifique);
 
-    if (!maxParSemaine) {
-      return idx;
-    }
-
     while (idx < openDays.length) {
-      const isoWeek = getIsoWeekForOpenDay(idx);
-      const used = getWeekUsage(courseId, isoWeek);
+      const day = openDays[idx];
 
-      if (used < maxParSemaine) {
-        return idx;
+      if (latestAllowedIso && day.iso > latestAllowedIso) {
+        return openDays.length;
       }
 
-      idx = findNextValidDayIndex(idx + 1, jourSpecifique);
+      if (maxParSemaine) {
+        const isoWeek = getIsoWeekForOpenDay(idx);
+        if (getWeekUsage(courseId, isoWeek) >= maxParSemaine) {
+          idx = findNextValidDayIndex(idx + 1, jourSpecifique);
+          continue;
+        }
+      }
+
+      return idx;
     }
 
     return idx;
@@ -798,8 +1042,14 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return 0;
   }
 
-  function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine) {
-    dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
+  function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
+    dayIndex = findNextValidDayIndexWithConstraints(
+      dayIndex,
+      jourSpecifique,
+      courseId,
+      maxParSemaine,
+      latestAllowedIso
+    );
 
     if (dayIndex >= openDays.length) return false;
 
@@ -809,7 +1059,13 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     if (currentMinutes >= 17 * 60 + 30) {
       moveToNextDay();
-      dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
+      dayIndex = findNextValidDayIndexWithConstraints(
+        dayIndex,
+        jourSpecifique,
+        courseId,
+        maxParSemaine,
+        latestAllowedIso
+      );
       if (dayIndex >= openDays.length) return false;
     }
 
@@ -817,7 +1073,13 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     if (durationMinutes > available) {
       moveToNextDay();
-      dayIndex = findNextValidDayIndexWithWeeklyLimit(dayIndex, jourSpecifique, courseId, maxParSemaine);
+      dayIndex = findNextValidDayIndexWithConstraints(
+        dayIndex,
+        jourSpecifique,
+        courseId,
+        maxParSemaine,
+        latestAllowedIso
+      );
       if (dayIndex >= openDays.length) return false;
     }
 
@@ -836,17 +1098,40 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return allDays.findIndex(day => day.iso === isoDate);
   }
 
+  function findNextReadySessionIndex(startIndex) {
+    for (let i = startIndex; i < sessions.length; i++) {
+      const session = sessions[i];
+      const course = courseMap[session.courseId];
+      if (!course) continue;
+
+      if (courseIsReady(course, completedCourseIds, courseMap)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   while (sessionIndex < sessions.length) {
+    const readyIndex = findNextReadySessionIndex(sessionIndex);
+    if (readyIndex === -1) {
+      break;
+    }
+
+    if (readyIndex !== sessionIndex) {
+      const tmp = sessions[sessionIndex];
+      sessions[sessionIndex] = sessions[readyIndex];
+      sessions[readyIndex] = tmp;
+    }
+
     const session = sessions[sessionIndex];
 
-    // CAS 0 : assermentation à date fixe, journée complète
+    // CAS 0 : assermentation à date fixe
     if (session.mode === "fixed_full_day") {
       const assermentationInput = document.getElementById("assermentationInput");
       const fixedDate = assermentationInput ? assermentationInput.value : null;
 
       if (fixedDate) {
         const fixedDayIndex = findDayIndexByIso(fixedDate);
-
         if (fixedDayIndex >= 0) {
           const fixedDay = allDays[fixedDayIndex];
 
@@ -865,6 +1150,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
               duree: block[2]
             });
           });
+
+          markCourseMinutes(session.courseId, session.duree);
         }
       }
 
@@ -874,26 +1161,23 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     // CAS 1 : classe entière
     if (session.mode === "classe_entiere") {
-      if (!ensureSessionFitsToday(session.duree, session.jour_specifique, session.courseId, session.max_par_semaine)) {
-        break;
+      if (!ensureSessionFitsToday(
+        session.duree,
+        session.jour_specifique,
+        session.courseId,
+        session.max_par_semaine,
+        session.latestAllowedIso
+      )) {
+        sessionIndex++;
+        continue;
       }
 
       const isoWeek = getIsoWeekForOpenDay(dayIndex);
-      if (session.max_par_semaine) {
-        addWeekUsage(session.courseId, isoWeek);
-      }
+      if (session.max_par_semaine) addWeekUsage(session.courseId, isoWeek);
 
       let remaining = session.duree;
 
       while (remaining > 0) {
-        if (dayIndex >= openDays.length) break;
-
-        nextSlot();
-        if (dayIndex >= openDays.length) break;
-
-        dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
-        if (dayIndex >= openDays.length) break;
-
         const slot = Math.min(30, remaining);
         const start = currentMinutes;
         const end = currentMinutes + slot;
@@ -909,6 +1193,12 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
         currentMinutes += slot;
         remaining -= slot;
+        markCourseMinutes(session.courseId, slot);
+
+        nextSlot();
+        if (remaining > 0) {
+          dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        }
       }
 
       sessionIndex++;
@@ -917,26 +1207,23 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     // CAS 2 : simultané
     if (session.mode === "simultane") {
-      if (!ensureSessionFitsToday(session.duree, session.jour_specifique, session.courseId, session.max_par_semaine)) {
-        break;
+      if (!ensureSessionFitsToday(
+        session.duree,
+        session.jour_specifique,
+        session.courseId,
+        session.max_par_semaine,
+        session.latestAllowedIso
+      )) {
+        sessionIndex++;
+        continue;
       }
 
       const isoWeek = getIsoWeekForOpenDay(dayIndex);
-      if (session.max_par_semaine) {
-        addWeekUsage(session.courseId, isoWeek);
-      }
+      if (session.max_par_semaine) addWeekUsage(session.courseId, isoWeek);
 
       let remaining = session.duree;
 
       while (remaining > 0) {
-        if (dayIndex >= openDays.length) break;
-
-        nextSlot();
-        if (dayIndex >= openDays.length) break;
-
-        dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
-        if (dayIndex >= openDays.length) break;
-
         const slot = Math.min(30, remaining);
         const start = currentMinutes;
         const end = currentMinutes + slot;
@@ -954,33 +1241,47 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
         currentMinutes += slot;
         remaining -= slot;
+        markCourseMinutes(session.courseId, slot);
+
+        nextSlot();
+        if (remaining > 0) {
+          dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        }
       }
 
       sessionIndex++;
       continue;
     }
 
-    // CAS 3 : non simultané, version continue
+    // CAS 3 : non simultané continu
     const batchJour = session.jour_specifique || "";
     const batch = [];
 
     while (
       sessionIndex < sessions.length &&
-      sessions[sessionIndex].mode === "non_simultane" &&
-      (sessions[sessionIndex].jour_specifique || "") === batchJour
+      sessions[sessionIndex].mode === "non_simultane"
     ) {
+      const candidate = sessions[sessionIndex];
+      const candidateCourse = courseMap[candidate.courseId];
+
+      if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
+        break;
+      }
+
+      if ((candidate.jour_specifique || "") !== batchJour) {
+        break;
+      }
+
       batch.push({
-        ...sessions[sessionIndex],
-        remaining: sessions[sessionIndex].duree
+        ...candidate,
+        remaining: candidate.duree
       });
       sessionIndex++;
     }
 
     const buckets = {};
     batch.forEach(s => {
-      if (!buckets[s.courseId]) {
-        buckets[s.courseId] = [];
-      }
+      if (!buckets[s.courseId]) buckets[s.courseId] = [];
       buckets[s.courseId].push(s);
     });
 
@@ -990,55 +1291,42 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       const rotatedGroups = getRotatedGroups();
 
       const activeSessions = [];
-
       courseIds.forEach(courseId => {
         const nextSession = buckets[courseId].find(s => s.remaining > 0);
-        if (nextSession) {
-          activeSessions.push(nextSession);
-        }
+        if (nextSession) activeSessions.push(nextSession);
       });
 
       const selectedSessions = activeSessions.slice(0, groups.length);
+      if (selectedSessions.length === 0) break;
 
-      const representativeCourse = selectedSessions[0]?.courseId || null;
-      const representativeMax = selectedSessions[0]?.max_par_semaine || null;
+      const representative = selectedSessions[0];
 
-      const waveAssignments = rotatedGroups.map((group, idx) => {
-        return {
-          groupName: group.name,
-          session: selectedSessions[idx] || null
-        };
-      });
+      const waveAssignments = rotatedGroups.map((group, idx) => ({
+        groupName: group.name,
+        session: selectedSessions[idx] || null
+      }));
 
       const waveDuration = Math.max(
         ...waveAssignments.map(a => (a.session ? a.session.remaining : 0)),
         0
       );
 
-      if (waveDuration === 0) {
-        break;
-      }
-
-      if (!ensureSessionFitsToday(waveDuration, batchJour, representativeCourse, representativeMax)) {
+      if (!ensureSessionFitsToday(
+        waveDuration,
+        batchJour,
+        representative.courseId,
+        representative.max_par_semaine,
+        representative.latestAllowedIso
+      )) {
         break;
       }
 
       const isoWeek = getIsoWeekForOpenDay(dayIndex);
       selectedSessions.forEach(s => {
-        if (s.max_par_semaine) {
-          addWeekUsage(s.courseId, isoWeek);
-        }
+        if (s.max_par_semaine) addWeekUsage(s.courseId, isoWeek);
       });
 
       while (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
-        if (dayIndex >= openDays.length) break;
-
-        nextSlot();
-        if (dayIndex >= openDays.length) break;
-
-        dayIndex = findNextValidDayIndex(dayIndex, batchJour);
-        if (dayIndex >= openDays.length) break;
-
         const start = currentMinutes;
         const end = currentMinutes + 30;
 
@@ -1054,6 +1342,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
             });
 
             assignment.session.remaining -= 30;
+            markCourseMinutes(assignment.session.courseId, 30);
           } else {
             result.push({
               date: openDays[dayIndex].dateFr,
@@ -1067,14 +1356,26 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         });
 
         currentMinutes += 30;
+
+        if (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
+          nextSlot();
+          dayIndex = findNextValidDayIndex(dayIndex, batchJour);
+        }
       }
 
       rotationOffset = (rotationOffset + 1) % groups.length;
     }
+
+    // une fois le batch fini, marquer les cours complètement terminés
+    courseIds.forEach(courseId => {
+      if ((remainingMinutesByCourse[courseId] || 0) <= 0) {
+        completedCourseIds.add(courseId);
+      }
+    });
   }
 
-  // Injection du débriefing en dernière plage du vendredi
-  const debriefCourse = courses.find(c => c.id === "MS1");
+  // Injection du débriefing en fin de vendredi
+  const debriefCourse = courses.find(c => isDebriefCourse(c));
   if (debriefCourse) {
     const fridayDays = openDays.filter(day => day.jour.toLowerCase() === "vendredi");
 
@@ -1083,14 +1384,10 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
       let latestEnd = "16:30";
 
-      if (sameDayRows.length > 0) {
-        sameDayRows.forEach(r => {
-          const end = r.time.split("-")[1];
-          if (end > latestEnd) {
-            latestEnd = end;
-          }
-        });
-      }
+      sameDayRows.forEach(r => {
+        const end = r.time.split("-")[1];
+        if (end > latestEnd) latestEnd = end;
+      });
 
       let startTime = "16:30";
       let endTime = "17:30";
@@ -1113,6 +1410,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
   return result;
 }
+
 function renderPlanning(planning) {
   const tbody = document.querySelector("#planningTable tbody");
   if (!tbody) return;
@@ -1201,6 +1499,23 @@ function renderPlanning(planning) {
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
+
+  const validation = validateCourses(courses);
+renderValidationReport(validation);
+
+if (validation.errors.length > 0) {
+  document.getElementById("summary").innerHTML = `
+    <p><b>Planification bloquée.</b></p>
+    <p>Corrigez d'abord les erreurs dans le catalogue.</p>
+  `;
+  renderOrderingTable(courses);
+  renderAvailabilityTable(courses);
+  renderSimulation(courses);
+  renderGroups([]);
+  renderRealSessionsTable([]);
+  renderPlanning([]);
+  return;
+}
 
   const dateDebut = document.getElementById("dateDebutInput").value || school.date_debut;
   const nombreAspirants = Number(document.getElementById("aspirantsInput").value);

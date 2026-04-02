@@ -665,6 +665,182 @@ function renderSimulation(courses){
 
 }
 
+function computeSchoolGroups(courses, nombreAspirants) {
+  let maxGroups = 1;
+
+  courses.forEach(course => {
+    if (course.division === "Oui") {
+      const groups = Math.ceil(nombreAspirants / course.participants);
+      if (groups > maxGroups) {
+        maxGroups = groups;
+      }
+    }
+  });
+
+  const result = [];
+
+  for (let i = 1; i <= maxGroups; i++) {
+    result.push({
+      id: i,
+      name: `Groupe ${i}`
+    });
+  }
+
+  return result;
+}
+
+function renderGroups(groups) {
+  const tbody = document.querySelector("#groupsTable tbody");
+  tbody.innerHTML = "";
+
+  groups.forEach(group => {
+    const row = `
+      <tr>
+        <td>${group.id}</td>
+        <td>${group.name}</td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+}
+
+function getOpenDays(calendarDays) {
+  return calendarDays.filter(day => day.status === "ouvrable");
+}
+
+function minutesToTimeString(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
+  const ordered = simulateExecution(courses).filter(x => x.id !== "---");
+  const openDays = getOpenDays(calendarDays);
+
+  const result = [];
+  let dayIndex = 0;
+  let currentMinutes = 8 * 60;
+
+  ordered.forEach(item => {
+    const course = courses.find(c => c.id === item.id);
+    if (!course) return;
+
+    let requiredGroups = 1;
+
+    if (course.division === "Oui") {
+      requiredGroups = Math.ceil(nombreAspirants / course.participants);
+    }
+
+    const plannedGroups = groups.slice(0, requiredGroups);
+
+    if (course.simultane === "Oui") {
+      let remaining = course.duree;
+
+      while (remaining > 0) {
+        if (dayIndex >= openDays.length) break;
+
+        if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+          currentMinutes = 13 * 60 + 30;
+        }
+
+        if (currentMinutes >= 17 * 60 + 30) {
+          dayIndex++;
+          currentMinutes = 8 * 60;
+          continue;
+        }
+
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
+        plannedGroups.forEach(group => {
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+            groupe: group.name,
+            id: course.id,
+            lecon: course.lecon,
+            duree: slot
+          });
+        });
+
+        currentMinutes += slot;
+        remaining -= slot;
+      }
+    } else {
+      plannedGroups.forEach(group => {
+        let remaining = course.duree;
+
+        while (remaining > 0) {
+          if (dayIndex >= openDays.length) break;
+
+          if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+            currentMinutes = 13 * 60 + 30;
+          }
+
+          if (currentMinutes >= 17 * 60 + 30) {
+            dayIndex++;
+            currentMinutes = 8 * 60;
+            continue;
+          }
+
+          const slot = Math.min(30, remaining);
+          const start = currentMinutes;
+          const end = currentMinutes + slot;
+
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+            groupe: group.name,
+            id: course.id,
+            lecon: course.lecon,
+            duree: slot
+          });
+
+          groups
+            .filter(otherGroup => otherGroup.name !== group.name)
+            .forEach(otherGroup => {
+              result.push({
+                date: openDays[dayIndex].dateFr,
+                time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+                groupe: otherGroup.name,
+                id: "",
+                lecon: "à dispo des instructeurs",
+                duree: slot
+              });
+            });
+
+          currentMinutes += slot;
+          remaining -= slot;
+        }
+      });
+    }
+  });
+
+  return result;
+}
+
+function renderPlanning(planning) {
+  const tbody = document.querySelector("#planningTable tbody");
+  tbody.innerHTML = "";
+
+  planning.forEach(row => {
+    const html = `
+      <tr>
+        <td>${row.date}</td>
+        <td>${row.time}</td>
+        <td>${row.groupe}</td>
+        <td>${row.id}</td>
+        <td>${row.lecon}</td>
+        <td>${row.duree}</td>
+      </tr>
+    `;
+
+    tbody.innerHTML += html;
+  });
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());
@@ -775,8 +951,10 @@ async function loadData() {
   renderAvailabilityTable(courses);
   renderSimulation(courses);
 
-  const planning=buildSimplePlanning(courses,calendarDays);
+const groups = computeSchoolGroups(courses, nombreAspirants);
+renderGroups(groups);
 
+const planning = buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants);
 renderPlanning(planning);
   const capaciteHeuresStandard = capacityStats.standardHours;
   const capaciteHeuresRealiste = capacityStats.realisticCapacity;

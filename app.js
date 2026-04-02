@@ -670,8 +670,8 @@ function renderRealSessionsTable(sessions) {
 }
 
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
-  const ordered = simulateExecution(courses).filter(x => x.id !== "---");
   const openDays = getOpenDays(calendarDays);
+  const sessions = buildRealSessions(courses, groups, nombreAspirants);
 
   const result = [];
   let dayIndex = 0;
@@ -688,17 +688,17 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     }
   }
 
-  function findNextValidDayIndex(startIndex, course) {
+  function findNextValidDayIndex(startIndex, jourSpecifique) {
     let idx = startIndex;
 
     while (idx < openDays.length) {
       const day = openDays[idx];
 
-      if (!course.jour_specifique) {
+      if (!jourSpecifique) {
         return idx;
       }
 
-      if (day.jour.toLowerCase() === course.jour_specifique.toLowerCase()) {
+      if (day.jour.toLowerCase() === jourSpecifique.toLowerCase()) {
         return idx;
       }
 
@@ -708,44 +708,61 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return idx;
   }
 
-  ordered.forEach(item => {
-    const course = courses.find(c => c.id === item.id);
-    if (!course) return;
+  sessions.forEach(session => {
+    dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+    let remaining = session.duree;
 
-    dayIndex = findNextValidDayIndex(dayIndex, course);
+    while (remaining > 0) {
+      if (dayIndex >= openDays.length) break;
 
-    // Cas 1 : classe entière
-    if (course.division === "Non") {
-      let remaining = course.duree;
+      nextSlot();
+      if (dayIndex >= openDays.length) break;
 
-      while (remaining > 0) {
-        if (dayIndex >= openDays.length) break;
+      dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+      if (dayIndex >= openDays.length) break;
 
-        nextSlot();
-        if (dayIndex >= openDays.length) break;
+      const slot = Math.min(30, remaining);
+      const start = currentMinutes;
+      const end = currentMinutes + slot;
 
-        dayIndex = findNextValidDayIndex(dayIndex, course);
-        if (dayIndex >= openDays.length) break;
-
-        const slot = Math.min(30, remaining);
-        const start = currentMinutes;
-        const end = currentMinutes + slot;
-
+      if (session.mode === "classe_entiere") {
         result.push({
           date: openDays[dayIndex].dateFr,
           time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
           groupe: "classe entière",
-          id: course.id,
-          lecon: course.lecon,
+          id: session.courseId,
+          lecon: session.lecon,
           duree: slot
         });
-
-        currentMinutes += slot;
-        remaining -= slot;
+      } else if (session.mode === "simultane") {
+        session.groups.forEach(groupName => {
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+            groupe: groupName,
+            id: session.courseId,
+            lecon: session.lecon,
+            duree: slot
+          });
+        });
+      } else {
+        result.push({
+          date: openDays[dayIndex].dateFr,
+          time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+          groupe: session.groupName,
+          id: session.courseId,
+          lecon: session.lecon,
+          duree: slot
+        });
       }
 
-      return;
+      currentMinutes += slot;
+      remaining -= slot;
     }
+  });
+
+  return result;
+}
 
     const requiredGroups = Math.ceil(nombreAspirants / course.participants);
     const plannedGroups = groups.slice(0, requiredGroups);

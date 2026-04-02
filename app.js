@@ -882,11 +882,41 @@ function renderPlanning(planning) {
 
   tbody.innerHTML = "";
 
+  const merged = [];
+
   planning.forEach(row => {
+    const last = merged[merged.length - 1];
+
+    if (
+      last &&
+      last.date === row.date &&
+      last.groupe === row.groupe &&
+      last.id === row.id &&
+      last.lecon === row.lecon &&
+      last.endTime === row.time.split("-")[0]
+    ) {
+      last.endTime = row.time.split("-")[1];
+      last.duree += row.duree;
+    } else {
+      const [startTime, endTime] = row.time.split("-");
+
+      merged.push({
+        date: row.date,
+        startTime,
+        endTime,
+        groupe: row.groupe,
+        id: row.id,
+        lecon: row.lecon,
+        duree: row.duree
+      });
+    }
+  });
+
+  merged.forEach(row => {
     const html = `
       <tr>
         <td>${row.date}</td>
-        <td>${row.time}</td>
+        <td>${row.startTime}-${row.endTime}</td>
         <td>${row.groupe}</td>
         <td>${row.id}</td>
         <td>${row.lecon}</td>

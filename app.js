@@ -590,7 +590,8 @@ function buildRealSessions(courses, groups, nombreAspirants) {
         lecon: course.lecon,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
-        mode: "classe_entiere"
+        mode: "classe_entiere",
+        groupName: "classe entière"
       });
       return;
     }
@@ -611,17 +612,17 @@ function buildRealSessions(courses, groups, nombreAspirants) {
       return;
     }
 
-    for (let i = 1; i <= requiredGroups; i++) {
+    plannedGroups.forEach(group => {
       sessions.push({
-        sessionId: `${course.id}-REP${i}`,
+        sessionId: `${course.id}-${group.name}`,
         courseId: course.id,
         lecon: course.lecon,
         jour_specifique: course.jour_specifique,
         duree: course.duree,
         mode: "non_simultane",
-        repetition: i
+        groupName: group.name
       });
-    }
+    });
   });
 
   return sessions;
@@ -871,6 +872,27 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   }
 
   return result;
+}
+
+function renderPlanning(planning) {
+  const tbody = document.querySelector("#planningTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  planning.forEach(row => {
+    const html = `
+      <tr>
+        <td>${row.date}</td>
+        <td>${row.time}</td>
+        <td>${row.groupe}</td>
+        <td>${row.id}</td>
+        <td>${row.lecon}</td>
+        <td>${row.duree}</td>
+      </tr>
+    `;
+    tbody.innerHTML += html;
+  });
 }
 
 async function loadData() {

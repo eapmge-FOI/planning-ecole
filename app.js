@@ -696,6 +696,11 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     }
   }
 
+  function moveToNextDay() {
+    dayIndex++;
+    currentMinutes = 8 * 60;
+  }
+
   function findNextValidDayIndex(startIndex, jourSpecifique) {
     let idx = startIndex;
 
@@ -716,6 +721,44 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return idx;
   }
 
+  function getRemainingTeachMinutesToday(fromMinutes) {
+    if (fromMinutes < 12 * 60) {
+      return (12 * 60 - fromMinutes) + (17 * 60 + 30 - (13 * 60 + 30));
+    }
+
+    if (fromMinutes >= 13 * 60 + 30 && fromMinutes < 17 * 60 + 30) {
+      return 17 * 60 + 30 - fromMinutes;
+    }
+
+    return 0;
+  }
+
+  function ensureSessionFitsToday(durationMinutes, jourSpecifique) {
+    dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+
+    if (dayIndex >= openDays.length) return false;
+
+    if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+      currentMinutes = 13 * 60 + 30;
+    }
+
+    if (currentMinutes >= 17 * 60 + 30) {
+      moveToNextDay();
+      dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+      if (dayIndex >= openDays.length) return false;
+    }
+
+    let available = getRemainingTeachMinutesToday(currentMinutes);
+
+    if (durationMinutes > available) {
+      moveToNextDay();
+      dayIndex = findNextValidDayIndex(dayIndex, jourSpecifique);
+      if (dayIndex >= openDays.length) return false;
+    }
+
+    return true;
+  }
+
   function getRotatedGroups() {
     const rotated = [];
     for (let i = 0; i < groups.length; i++) {
@@ -729,7 +772,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     // CAS 1 : classe entière
     if (session.mode === "classe_entiere") {
-      dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+      if (!ensureSessionFitsToday(session.duree, session.jour_specifique)) break;
+
       let remaining = session.duree;
 
       while (remaining > 0) {
@@ -764,7 +808,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     // CAS 2 : simultané
     if (session.mode === "simultane") {
-      dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+      if (!ensureSessionFitsToday(session.duree, session.jour_specifique)) break;
+
       let remaining = session.duree;
 
       while (remaining > 0) {
@@ -828,7 +873,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
       const rotatedGroups = getRotatedGroups();
 
-      // on prend au maximum une séance active par cours
       const activeSessions = [];
       courseIds.forEach(courseId => {
         const nextSession = buckets[courseId].find(s => s.remaining > 0);
@@ -837,10 +881,8 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         }
       });
 
-      // limiter au nombre de groupes
       const selectedSessions = activeSessions.slice(0, groups.length);
 
-      // créer les affectations de cette "vague"
       const waveAssignments = rotatedGroups.map((group, idx) => {
         return {
           groupName: group.name,
@@ -848,7 +890,17 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         };
       });
 
-      // durée de la vague = jusqu'à la fin de toutes les séances sélectionnées
+      const waveDuration = Math.max(
+        ...waveAssignments.map(a => (a.session ? a.session.remaining : 0)),
+        0
+      );
+
+      if (waveDuration === 0) {
+        break;
+      }
+
+      if (!ensureSessionFitsToday(waveDuration, batchJour)) break;
+
       while (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
         if (dayIndex >= openDays.length) break;
 

@@ -705,58 +705,77 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       return;
     }
 
-    // Cas 3 : division Oui + simultané Non
-    let remaining = course.duree;
+// Cas 3 : division Oui + simultané Non
+const completedIds = new Set(result.map(r => r.id).filter(Boolean));
+const otherCourses = getGroupCompatibleCourses(courses, completedIds, [course.id]);
 
-    while (remaining > 0) {
-      if (dayIndex >= openDays.length) break;
+const activeAssignments = [];
 
-      nextSlot();
-      if (dayIndex >= openDays.length) break;
+// le cours principal prend le premier groupe
+activeAssignments.push({
+  group: plannedGroups[0],
+  course: course,
+  remaining: course.duree
+});
 
-      dayIndex = findNextValidDayIndex(dayIndex, course);
-      if (dayIndex >= openDays.length) break;
+// on affecte d'autres cours compatibles aux autres groupes
+for (let i = 1; i < plannedGroups.length; i++) {
+  const nextCourse = otherCourses.shift();
 
-      const slot = Math.min(30, remaining);
-      const start = currentMinutes;
-      const end = currentMinutes + slot;
+  if (nextCourse) {
+    activeAssignments.push({
+      group: plannedGroups[i],
+      course: nextCourse,
+      remaining: nextCourse.duree
+    });
+  } else {
+    activeAssignments.push({
+      group: plannedGroups[i],
+      course: null,
+      remaining: 0
+    });
+  }
+}
 
-      const completedIds = new Set(result.map(r => r.id).filter(Boolean));
-      const otherCourses = getGroupCompatibleCourses(courses, completedIds, [course.id]);
+// on fait avancer tout le paquet parallèle bloc par bloc
+while (activeAssignments.some(a => a.course && a.remaining > 0)) {
+  if (dayIndex >= openDays.length) break;
 
-      plannedGroups.forEach((group, index) => {
-        let selectedCourse = null;
+  nextSlot();
+  if (dayIndex >= openDays.length) break;
 
-        if (index === 0) {
-          selectedCourse = course;
-        } else if (otherCourses.length > 0) {
-          selectedCourse = otherCourses.shift();
-        }
+  dayIndex = findNextValidDayIndex(dayIndex, course);
+  if (dayIndex >= openDays.length) break;
 
-        if (selectedCourse) {
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: selectedCourse.id,
-            lecon: selectedCourse.lecon,
-            duree: slot
-          });
-        } else {
-          result.push({
-            date: openDays[dayIndex].dateFr,
-            time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
-            groupe: group.name,
-            id: "",
-            lecon: "à dispo des instructeurs",
-            duree: slot
-          });
-        }
+  const start = currentMinutes;
+  const end = currentMinutes + 30;
+
+  activeAssignments.forEach(assignment => {
+    if (assignment.course && assignment.remaining > 0) {
+      result.push({
+        date: openDays[dayIndex].dateFr,
+        time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+        groupe: assignment.group.name,
+        id: assignment.course.id,
+        lecon: assignment.course.lecon,
+        duree: 30
       });
 
-      currentMinutes += slot;
-      remaining -= slot;
+      assignment.remaining -= 30;
+    } else {
+      result.push({
+        date: openDays[dayIndex].dateFr,
+        time: minutesToTimeString(start) + "-" + minutesToTimeString(end),
+        groupe: assignment.group.name,
+        id: "",
+        lecon: "à dispo des instructeurs",
+        duree: 30
+      });
     }
+  });
+
+  currentMinutes += 30;
+}
   });
 
   return result;

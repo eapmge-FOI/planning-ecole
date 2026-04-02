@@ -653,6 +653,7 @@ async function loadData() {
 
   renderOrderingTable(courses);
   renderAvailabilityTable(courses);
+  renderSimulation(courses);
 
   const capaciteHeuresStandard = capacityStats.standardHours;
   const capaciteHeuresRealiste = capacityStats.realisticCapacity;

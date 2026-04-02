@@ -420,6 +420,131 @@ function renderAvailabilityTable(courses) {
   });
 }
 
+function dependenciesSatisfied(course, completed) {
+
+  if (!course.apres_cours_id || course.apres_cours_id.length === 0)
+    return true;
+
+  return course.apres_cours_id.every(id => completed.has(id));
+
+}
+
+function ordreSatisfied(course, completed, courses){
+
+  if(!course.ordre_lecon || course.ordre_lecon <=1)
+    return true;
+
+  const previous = courses.filter(c =>
+    c.sous_branche === course.sous_branche &&
+    c.ordre_lecon >0 &&
+    c.ordre_lecon < course.ordre_lecon
+  );
+
+  return previous.every(c => completed.has(c.id));
+
+}
+
+function getAvailableCourses(courses, completed){
+
+  return courses.filter(course => {
+
+    if(completed.has(course.id))
+      return false;
+
+    if(!dependenciesSatisfied(course,completed))
+      return false;
+
+    if(!ordreSatisfied(course,completed,courses))
+      return false;
+
+    return true;
+
+  });
+
+}
+
+function simulateExecution(courses){
+
+  const completed = new Set();
+
+  const result=[];
+
+  let step=1;
+
+  while(completed.size < courses.length){
+
+    const available = getAvailableCourses(courses,completed);
+
+    if(available.length===0){
+
+      result.push({
+
+        step:"ERREUR",
+        id:"---",
+        lecon:"cycle ou dépendance impossible",
+        reason:"vérifier dépendances"
+
+      });
+
+      break;
+
+    }
+
+    available.forEach(course=>{
+
+      completed.add(course.id);
+
+      result.push({
+
+        step:step,
+        id:course.id,
+        lecon:course.lecon,
+        reason:"contraintes satisfaites"
+
+      });
+
+      step++;
+
+    });
+
+  }
+
+  return result;
+
+}
+
+function renderSimulation(courses){
+
+  const tbody=document.querySelector("#simulationTable tbody");
+
+  tbody.innerHTML="";
+
+  const simulation=simulateExecution(courses);
+
+  simulation.forEach(item=>{
+
+    const row=`
+
+    <tr>
+
+    <td>${item.step}</td>
+
+    <td>${item.id}</td>
+
+    <td>${item.lecon}</td>
+
+    <td>${item.reason}</td>
+
+    </tr>
+
+    `;
+
+    tbody.innerHTML+=row;
+
+  });
+
+}
+
 async function loadData() {
   const school = await fetch("data/school_params.json").then(r => r.json());
   const courses = await fetch("data/courses.json").then(r => r.json());

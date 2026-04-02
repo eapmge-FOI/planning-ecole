@@ -901,9 +901,30 @@ function renderPlanning(planning) {
 
   tbody.innerHTML = "";
 
+  const parsed = planning.map(row => {
+    const [startTime, endTime] = row.time.split("-");
+    return {
+      date: row.date,
+      startTime,
+      endTime,
+      groupe: row.groupe,
+      id: row.id || "",
+      lecon: row.lecon || "",
+      duree: row.duree
+    };
+  });
+
+  parsed.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
+    if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+    if (a.id !== b.id) return a.id.localeCompare(b.id);
+    return a.lecon.localeCompare(b.lecon);
+  });
+
   const merged = [];
 
-  planning.forEach(row => {
+  parsed.forEach(row => {
     const last = merged[merged.length - 1];
 
     if (
@@ -912,23 +933,29 @@ function renderPlanning(planning) {
       last.groupe === row.groupe &&
       last.id === row.id &&
       last.lecon === row.lecon &&
-      last.endTime === row.time.split("-")[0]
+      last.endTime === row.startTime
     ) {
-      last.endTime = row.time.split("-")[1];
+      last.endTime = row.endTime;
       last.duree += row.duree;
     } else {
-      const [startTime, endTime] = row.time.split("-");
-
       merged.push({
         date: row.date,
-        startTime,
-        endTime,
+        startTime: row.startTime,
+        endTime: row.endTime,
         groupe: row.groupe,
         id: row.id,
         lecon: row.lecon,
         duree: row.duree
       });
     }
+  });
+
+  merged.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+    if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
+    if (a.id !== b.id) return a.id.localeCompare(b.id);
+    return a.lecon.localeCompare(b.lecon);
   });
 
   merged.forEach(row => {

@@ -656,33 +656,21 @@ function renderRealSessionsTable(sessions) {
   });
 }
 
-function createRoundRobinSessionQueue(batchSessions) {
-  const groupsByCourse = {};
+function createCourseBuckets(batchSessions) {
+  const buckets = {};
 
   batchSessions.forEach(session => {
-    if (!groupsByCourse[session.courseId]) {
-      groupsByCourse[session.courseId] = [];
+    if (!buckets[session.courseId]) {
+      buckets[session.courseId] = [];
     }
-    groupsByCourse[session.courseId].push({ ...session, remaining: session.duree });
+
+    buckets[session.courseId].push({
+      ...session,
+      remaining: session.duree
+    });
   });
 
-  const courseIds = Object.keys(groupsByCourse);
-  const queue = [];
-
-  let stillHasItems = true;
-
-  while (stillHasItems) {
-    stillHasItems = false;
-
-    courseIds.forEach(courseId => {
-      if (groupsByCourse[courseId].length > 0) {
-        queue.push(groupsByCourse[courseId].shift());
-        stillHasItems = true;
-      }
-    });
-  }
-
-  return queue;
+  return buckets;
 }
 
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
@@ -800,7 +788,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       continue;
     }
 
-    // CAS 3 : non simultané -> on regroupe toutes les séances non_simultane consécutives
+    // CAS 3 : non simultané
     const batchJour = session.jour_specifique || "";
     const batch = [];
 
@@ -813,9 +801,10 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       sessionIndex++;
     }
 
-    let workQueue = createRoundRobinSessionQueue(batch);
+    const buckets = createCourseBuckets(batch);
+    const courseIds = Object.keys(buckets);
 
-    while (workQueue.some(s => s.remaining > 0)) {
+    while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
       if (dayIndex >= openDays.length) break;
 
       nextSlot();
@@ -827,19 +816,19 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       const start = currentMinutes;
       const end = currentMinutes + 30;
 
-      const assignments = [];
-      const waiting = [];
+      // IMPORTANT :
+      // on ne prend qu'une seule répétition par cours pour ce créneau
+      const activeSessions = [];
 
-      workQueue.forEach(sessionItem => {
-        if (sessionItem.remaining > 0 && assignments.length < groups.length) {
-          assignments.push(sessionItem);
-        } else {
-          waiting.push(sessionItem);
+      courseIds.forEach(courseId => {
+        const nextSession = buckets[courseId].find(s => s.remaining > 0);
+        if (nextSession) {
+          activeSessions.push(nextSession);
         }
       });
 
       groups.forEach((group, idx) => {
-        const assigned = assignments[idx];
+        const assigned = activeSessions[idx];
 
         if (assigned && assigned.remaining > 0) {
           result.push({
@@ -863,9 +852,6 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
           });
         }
       });
-
-      const unfinishedAssignments = assignments.filter(a => a.remaining > 0);
-      workQueue = waiting.concat(unfinishedAssignments);
 
       currentMinutes += 30;
     }

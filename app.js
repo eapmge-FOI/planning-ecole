@@ -1042,7 +1042,44 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return 0;
   }
 
-  function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
+ function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
+  function normalizePreferredStart(minutes, duration) {
+    const allowedStarts120 = [8 * 60, 10 * 60, 13 * 60 + 30, 15 * 60 + 30];
+    const allowedStarts240 = [8 * 60, 13 * 60 + 30];
+
+    if (duration <= 120) {
+      for (const start of allowedStarts120) {
+        if (minutes <= start) return start;
+      }
+      return null;
+    }
+
+    if (duration <= 240) {
+      for (const start of allowedStarts240) {
+        if (minutes <= start) return start;
+      }
+      return null;
+    }
+
+    return minutes;
+  }
+
+  dayIndex = findNextValidDayIndexWithConstraints(
+    dayIndex,
+    jourSpecifique,
+    courseId,
+    maxParSemaine,
+    latestAllowedIso
+  );
+
+  if (dayIndex >= openDays.length) return false;
+
+  if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+    currentMinutes = 13 * 60 + 30;
+  }
+
+  if (currentMinutes >= 17 * 60 + 30) {
+    moveToNextDay();
     dayIndex = findNextValidDayIndexWithConstraints(
       dayIndex,
       jourSpecifique,
@@ -1050,41 +1087,51 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       maxParSemaine,
       latestAllowedIso
     );
+    if (dayIndex >= openDays.length) return false;
+  }
 
+  if (durationMinutes <= 240) {
+    const preferredStart = normalizePreferredStart(currentMinutes, durationMinutes);
+
+    if (preferredStart === null) {
+      moveToNextDay();
+      dayIndex = findNextValidDayIndexWithConstraints(
+        dayIndex,
+        jourSpecifique,
+        courseId,
+        maxParSemaine,
+        latestAllowedIso
+      );
+      if (dayIndex >= openDays.length) return false;
+
+      currentMinutes = durationMinutes <= 120 ? 8 * 60 : 8 * 60;
+    } else {
+      currentMinutes = preferredStart;
+    }
+  }
+
+  const available = getRemainingTeachMinutesToday(currentMinutes);
+
+  if (durationMinutes > available) {
+    moveToNextDay();
+    dayIndex = findNextValidDayIndexWithConstraints(
+      dayIndex,
+      jourSpecifique,
+      courseId,
+      maxParSemaine,
+      latestAllowedIso
+    );
     if (dayIndex >= openDays.length) return false;
 
-    if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
-      currentMinutes = 13 * 60 + 30;
+    if (durationMinutes <= 120) {
+      currentMinutes = 8 * 60;
+    } else if (durationMinutes <= 240) {
+      currentMinutes = 8 * 60;
     }
-
-    if (currentMinutes >= 17 * 60 + 30) {
-      moveToNextDay();
-      dayIndex = findNextValidDayIndexWithConstraints(
-        dayIndex,
-        jourSpecifique,
-        courseId,
-        maxParSemaine,
-        latestAllowedIso
-      );
-      if (dayIndex >= openDays.length) return false;
-    }
-
-    const available = getRemainingTeachMinutesToday(currentMinutes);
-
-    if (durationMinutes > available) {
-      moveToNextDay();
-      dayIndex = findNextValidDayIndexWithConstraints(
-        dayIndex,
-        jourSpecifique,
-        courseId,
-        maxParSemaine,
-        latestAllowedIso
-      );
-      if (dayIndex >= openDays.length) return false;
-    }
-
-    return true;
   }
+
+  return true;
+}
 
   function getRotatedGroups() {
     const rotated = [];

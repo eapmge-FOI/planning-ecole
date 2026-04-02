@@ -232,6 +232,126 @@ function buildBaseCalendar(dateDebut, dateFin, assermentationDate, joursFeries, 
   return days;
 }
 
+function getOpenDays(calendarDays){
+
+return calendarDays.filter(d=>d.status==="ouvrable");
+
+}
+
+function minutesToTimeString(minutes){
+
+const h=Math.floor(minutes/60);
+
+const m=minutes%60;
+
+return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+
+}
+
+function buildSimplePlanning(courses,calendarDays){
+
+const ordered=simulateExecution(courses)
+.filter(x=>x.id!=="---");
+
+const openDays=getOpenDays(calendarDays);
+
+let dayIndex=0;
+
+let currentMinutes=8*60;
+
+const result=[];
+
+ordered.forEach(item=>{
+
+const course=courses.find(c=>c.id===item.id);
+
+let remaining=course.duree;
+
+while(remaining>0){
+
+if(dayIndex>=openDays.length)
+break;
+
+if(currentMinutes>=12*60 && currentMinutes<13*60+30){
+
+currentMinutes=13*60+30;
+
+}
+
+if(currentMinutes>=17*60+30){
+
+dayIndex++;
+
+currentMinutes=8*60;
+
+continue;
+
+}
+
+const slot=Math.min(30,remaining);
+
+const start=currentMinutes;
+
+const end=currentMinutes+slot;
+
+result.push({
+
+date:openDays[dayIndex].dateFr,
+
+time:minutesToTimeString(start)+"-"+minutesToTimeString(end),
+
+id:course.id,
+
+lecon:course.lecon,
+
+duree:slot
+
+});
+
+currentMinutes+=slot;
+
+remaining-=slot;
+
+}
+
+});
+
+return result;
+
+}
+
+function renderPlanning(planning){
+
+const tbody=document.querySelector("#planningTable tbody");
+
+tbody.innerHTML="";
+
+planning.forEach(row=>{
+
+const html=`
+
+<tr>
+
+<td>${row.date}</td>
+
+<td>${row.time}</td>
+
+<td>${row.id}</td>
+
+<td>${row.lecon}</td>
+
+<td>${row.duree}</td>
+
+</tr>
+
+`;
+
+tbody.innerHTML+=html;
+
+});
+
+}
+
 function renderBaseCalendar(calendarDays) {
   const tbody = document.querySelector("#calendarTable tbody");
   tbody.innerHTML = "";

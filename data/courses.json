@@ -127,7 +127,7 @@
     "ordre_lecon": 7,
     "apres_cours_id": [],
     "avant_cours_id": [
-      "H7"
+      "J9"
     ],
     "delai_max_valeur": null,
     "delai_max_unite": null,
@@ -441,7 +441,7 @@
     "jour_specifique": null
   },
   {
-    "id": "B9",
+    "id": "B29",
     "branche": "Circulation Routière",
     "sous_branche": "Circulation Routière Cant",
     "type": "théorique",
@@ -3247,7 +3247,7 @@
     "simultane": "Non",
     "ordre_lecon": 29,
     "apres_cours_id": [
-      "H11"
+      "I11"
     ],
     "avant_cours_id": [],
     "delai_max_valeur": null,
@@ -3844,8 +3844,8 @@
     "type": "stage",
     "lecon": "Stage",
     "duree": 4800,
-    "participants": "N/A",
-    "encadrants": "N/A",
+    "participants": "40",
+    "encadrants": "1",
     "division": "Non",
     "simultane": "Non",
     "ordre_lecon": 0,
@@ -3882,8 +3882,8 @@
     "type": "pratique",
     "lecon": "ACTIVITES DE FIN D'ECOLE",
     "duree": 480,
-    "participants": "N/A",
-    "encadrants": "N/A",
+    "participants": "40",
+    "encadrants": "8",
     "division": "Non",
     "simultane": "Non",
     "ordre_lecon": 0,

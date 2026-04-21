@@ -3888,7 +3888,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "AS1"
+      "S1"
     ],
     "avant_cours_id": [],
     "delai_max_valeur": null,
@@ -3909,7 +3909,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "AS1"
+      "S1"
     ],
     "avant_cours_id": [],
     "delai_max_valeur": null,
@@ -3930,7 +3930,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "AS1"
+      "S1"
     ],
     "avant_cours_id": [],
     "delai_max_valeur": null,

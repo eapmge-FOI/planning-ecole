@@ -1,3 +1,14 @@
+const CONFIG = {
+  DAY_START: 8 * 60,
+  LUNCH_START: 12 * 60,
+  LUNCH_END: 13 * 60 + 30,
+  DAY_END: 17 * 60 + 30,
+  SLOT_DURATION: 30,
+
+  HALF_DAY_SLOTS: [8 * 60, 10 * 60, 13 * 60 + 30, 15 * 60 + 30],
+  FULL_DAY_SLOTS: [8 * 60, 13 * 60 + 30]
+};
+
 function addMonthsToDate(dateString, monthsToAdd) {
   const baseDate = new Date(dateString);
   const result = new Date(baseDate);
@@ -944,6 +955,17 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   const weekUsage = {};
   const completedCourseIds = new Set();
   const remainingMinutesByCourse = {};
+  
+sessions.sort((a, b) => {
+  if (a.latestAllowedIso && !b.latestAllowedIso) return -1;
+  if (!a.latestAllowedIso && b.latestAllowedIso) return 1;
+
+  if (a.latestAllowedIso && b.latestAllowedIso) {
+    return a.latestAllowedIso.localeCompare(b.latestAllowedIso);
+  }
+
+  return 0;
+});
 
   sessions.forEach(session => {
     if (!remainingMinutesByCourse[session.courseId]) {
@@ -952,13 +974,16 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     remainingMinutesByCourse[session.courseId] += session.duree;
   });
 
-  function markCourseMinutes(courseId, minutes) {
-    if (remainingMinutesByCourse[courseId] === undefined) return;
-    remainingMinutesByCourse[courseId] -= minutes;
-    if (remainingMinutesByCourse[courseId] <= 0) {
-      completedCourseIds.add(courseId);
-    }
+function markCourseMinutes(courseId, minutes) {
+  if (remainingMinutesByCourse[courseId] === undefined) return;
+
+  remainingMinutesByCourse[courseId] -= minutes;
+
+  if (remainingMinutesByCourse[courseId] <= 0) {
+    remainingMinutesByCourse[courseId] = 0;
+    completedCourseIds.add(courseId);
   }
+}
 
   function addWeekUsage(courseId, isoWeek) {
     if (!weekUsage[courseId]) weekUsage[courseId] = {};
@@ -1016,7 +1041,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         return openDays.length;
       }
 
-      if (maxParSemaine) {
+      if (maxParSemaine !== null && maxParSemaine !== undefined) {
         const isoWeek = getIsoWeekForOpenDay(idx);
         if (getWeekUsage(courseId, isoWeek) >= maxParSemaine) {
           idx = findNextValidDayIndex(idx + 1, jourSpecifique);
@@ -1042,28 +1067,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return 0;
   }
 
- function ensureSessionFitsToday(durationMinutes, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
-  function normalizePreferredStart(minutes, duration) {
-    const allowedStarts120 = [8 * 60, 10 * 60, 13 * 60 + 30, 15 * 60 + 30];
-    const allowedStarts240 = [8 * 60, 13 * 60 + 30];
-
-    if (duration <= 120) {
-      for (const start of allowedStarts120) {
-        if (minutes <= start) return start;
-      }
-      return null;
-    }
-
-    if (duration <= 240) {
-      for (const start of allowedStarts240) {
-        if (minutes <= start) return start;
-      }
-      return null;
-    }
-
-    return minutes;
-  }
-
+function ensureSessionFitsToday(duration, jourSpecifique, courseId, maxParSemaine, latestAllowedIso) {
   dayIndex = findNextValidDayIndexWithConstraints(
     dayIndex,
     jourSpecifique,
@@ -1074,72 +1078,30 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
   if (dayIndex >= openDays.length) return false;
 
-  if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
-    currentMinutes = 13 * 60 + 30;
+  // Pause midi
+  if (currentMinutes >= CONFIG.LUNCH_START && currentMinutes < CONFIG.LUNCH_END) {
+    currentMinutes = CONFIG.LUNCH_END;
   }
 
-  if (currentMinutes >= 17 * 60 + 30) {
+  // Fin de journée
+  if (currentMinutes >= CONFIG.DAY_END) {
     moveToNextDay();
-    dayIndex = findNextValidDayIndexWithConstraints(
-      dayIndex,
-      jourSpecifique,
-      courseId,
-      maxParSemaine,
-      latestAllowedIso
-    );
-    if (dayIndex >= openDays.length) return false;
+    return ensureSessionFitsToday(duration, jourSpecifique, courseId, maxParSemaine, latestAllowedIso);
   }
 
-  if (durationMinutes <= 240) {
-    const preferredStart = normalizePreferredStart(currentMinutes, durationMinutes);
+  const remaining = getRemainingTeachMinutesToday(currentMinutes);
 
-    if (preferredStart === null) {
-      moveToNextDay();
-      dayIndex = findNextValidDayIndexWithConstraints(
-        dayIndex,
-        jourSpecifique,
-        courseId,
-        maxParSemaine,
-        latestAllowedIso
-      );
-      if (dayIndex >= openDays.length) return false;
-
-      currentMinutes = durationMinutes <= 120 ? 8 * 60 : 8 * 60;
-    } else {
-      currentMinutes = preferredStart;
-    }
-  }
-
-  const available = getRemainingTeachMinutesToday(currentMinutes);
-
-  if (durationMinutes > available) {
+  if (duration > remaining) {
     moveToNextDay();
-    dayIndex = findNextValidDayIndexWithConstraints(
-      dayIndex,
-      jourSpecifique,
-      courseId,
-      maxParSemaine,
-      latestAllowedIso
-    );
-    if (dayIndex >= openDays.length) return false;
-
-    if (durationMinutes <= 120) {
-      currentMinutes = 8 * 60;
-    } else if (durationMinutes <= 240) {
-      currentMinutes = 8 * 60;
-    }
+    return ensureSessionFitsToday(duration, jourSpecifique, courseId, maxParSemaine, latestAllowedIso);
   }
 
   return true;
 }
 
-  function getRotatedGroups() {
-    const rotated = [];
-    for (let i = 0; i < groups.length; i++) {
-      rotated.push(groups[(i + rotationOffset) % groups.length]);
-    }
-    return rotated;
-  }
+function getRotatedGroups() {
+  return groups.map((_, i) => groups[(i + rotationOffset) % groups.length]);
+}
 
   function findDayIndexByIso(isoDate) {
     return allDays.findIndex(day => day.iso === isoDate);
@@ -1158,7 +1120,17 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
     return -1;
   }
 
+	let safety = 0;
   while (sessionIndex < sessions.length) {
+  safety++;
+if (safety > 10000) {
+  console.error("Boucle infinie détectée", {
+  sessionIndex,
+  dayIndex,
+  currentMinutes
+});
+  break;
+}
     const readyIndex = findNextReadySessionIndex(sessionIndex);
     if (readyIndex === -1) {
       break;
@@ -1460,7 +1432,10 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
 function renderPlanning(planning) {
   const tbody = document.querySelector("#planningTable tbody");
-  if (!tbody) return;
+  if (!tbody) {
+  console.warn("Table non trouvée");
+  return;
+}
 
   tbody.innerHTML = "";
 

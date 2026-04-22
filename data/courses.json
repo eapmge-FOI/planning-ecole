@@ -510,7 +510,7 @@
     "jour_specifique": null
   },
   {
-    "id": "B9",
+    "id": "B29",
     "branche": "Circulation Routière",
     "sous_branche": "Circulation Routière Cant",
     "type": "théorique",
@@ -3754,7 +3754,7 @@
     "simultane": "Non",
     "ordre_lecon": 29,
     "apres_cours_id": [
-      "H11"
+      "I11"
     ],
     "avant_cours_id": [],
     "doit_suivre": [],
@@ -6310,7 +6310,7 @@
     "jour_specifique": null
   },
   {
-    "id": "S1",
+    "id": "S25",
     "branche": "Sport",
     "sous_branche": "Sport",
     "type": "pratique",

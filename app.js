@@ -1276,27 +1276,29 @@ if (safety > 10000) {
     const batchJour = session.jour_specifique || "";
     const batch = [];
 
-    while (
-      sessionIndex < sessions.length &&
-      sessions[sessionIndex].mode === "non_simultane"
-    ) {
-      const candidate = sessions[sessionIndex];
-      const candidateCourse = courseMap[candidate.courseId];
+while (
+  sessionIndex < sessions.length &&
+  sessions[sessionIndex].mode === "non_simultane"
+) {
+  const candidate = sessions[sessionIndex];
+  const candidateCourse = courseMap[candidate.courseId];
 
-      if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
-        break;
-      }
+  // 🔴 AJOUT CRITIQUE
+  if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
+    break;
+  }
 
-      if ((candidate.jour_specifique || "") !== batchJour) {
-        break;
-      }
+  if ((candidate.jour_specifique || "") !== batchJour) {
+    break;
+  }
 
-      batch.push({
-        ...candidate,
-        remaining: candidate.duree
-      });
-      sessionIndex++;
-    }
+  batch.push({
+    ...candidate,
+    remaining: candidate.duree
+  });
+
+  sessionIndex++;
+}
 
     const buckets = {};
     batch.forEach(s => {

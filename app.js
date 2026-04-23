@@ -322,150 +322,204 @@ function getConstraintPriority(course) {
   if (course.type && String(course.type).toLowerCase() === "examen") {
     return { level: 4, reason: "examen" };
   }
+    const openDays = calendarDays.filter(day => day.status === "ouvrable");
+  const fridayOpenDays = openDays.filter(day => day.dayOfWeek === 5).length;
+
+  const openWeeks = new Set(openDays.map(day => getWeekKeyFromISO(day.iso)));
+  const numberOfOpenWeeks = openWeeks.size;
+
+  const standardHours = openDays.length * 8;
+  const debriefHours = fridayOpenDays * 1;
+  const runningHours = numberOfOpenWeeks * 1.5;
+
+  const realisticCapacity = standardHours - debriefHours - runningHours;
+
+  return {
+    openDays: openDays.length,
+    fridayOpenDays,
+    numberOfOpenWeeks,
+    standardHours,
+    debriefHours,
+    runningHours,
+    realisticCapacity
+  };
+}
+
+function getOrderingPriority(course) {
+  if (course.jour_specifique) {
+    return { level: 1, reason: `jour spécifique: ${course.jour_specifique}` };
+  }
+
+  if (course.delai_max_valeur !== null && course.delai_max_unite !== null) {
+    return { level: 2, reason: `délai max: ${course.delai_max_valeur} ${course.delai_max_unite}` };
+  }
+
+  if (
+    (course.apres_cours_id && course.apres_cours_id.length > 0) ||
+    (course.avant_cours_id && course.avant_cours_id.length > 0)
+  ) {
+    return { level: 3, reason: "dépendance avec autre cours" };
+  }
+
+  if (course.ordre_lecon && course.ordre_lecon > 0) {
+    return { level: 4, reason: `ordre interne sous-branche: ${course.ordre_lecon}` };
+  }
 
   if (course.max_par_semaine !== null) {
     return { level: 5, reason: `maximum par semaine: ${course.max_par_semaine}` };
   }
 
-  return { level: 9, reason: "sans contrainte forte" };
+  return { level: 6, reason: "aucune contrainte particulière" };
 }
 
-function buildOrdering(courses) {
-  const rows = courses.map(course => {
-    const priority = getConstraintPriority(course);
-    return {
-      id: course.id,
-      lecon: course.lecon,
-      level: priority.level,
-      reason: priority.reason,
-      ordre: Number(course.ordre_lecon || 0)
-    };
-  });
-
-  rows.sort((a, b) => {
-    if (a.level !== b.level) return a.level - b.level;
-    if (a.ordre !== b.ordre) {
-      if (a.ordre === 0) return 1;
-      if (b.ordre === 0) return -1;
-      return a.ordre - b.ordre;
-    }
-    return a.id.localeCompare(b.id);
-  });
-
-  return rows.map((row, idx) => ({
-    ...row,
-    rank: idx + 1
-  }));
-}
-
-function renderOrdering(rows) {
+function renderOrderingTable(courses) {
   const tbody = document.querySelector("#orderingTable tbody");
-  if (!tbody) return;
+  if (!tbody) return [];
 
   tbody.innerHTML = "";
 
-  rows.forEach(row => {
-    const tr = `
+  const ordered = [...courses]
+    .map(course => {
+      const ordering = getOrderingPriority(course);
+      return {
+        ...course,
+        orderingLevel: ordering.level,
+        orderingReason: ordering.reason
+      };
+    })
+    .sort((a, b) => {
+      if (a.orderingLevel !== b.orderingLevel) {
+        return a.orderingLevel - b.orderingLevel;
+      }
+
+      if ((a.ordre_lecon || 0) !== (b.ordre_lecon || 0)) {
+        return (a.ordre_lecon || 0) - (b.ordre_lecon || 0);
+      }
+
+      return a.id.localeCompare(b.id);
+    });
+
+  ordered.forEach((course, index) => {
+    const row = `
       <tr>
-        <td>${row.rank}</td>
-        <td>${row.id}</td>
-        <td>${row.lecon}</td>
-        <td>${row.level}</td>
-        <td>${row.reason}</td>
+        <td>${index + 1}</td>
+        <td>${course.id}</td>
+        <td>${course.lecon}</td>
+        <td>${course.orderingLevel}</td>
+        <td>${course.orderingReason}</td>
       </tr>
     `;
-    tbody.innerHTML += tr;
+    tbody.innerHTML += row;
   });
+
+  return ordered;
 }
 
-function buildAvailabilityAtStart(courses) {
-  return courses.map(course => {
-    if (course.apres_cours_id && course.apres_cours_id.length > 0) {
-      return {
-        id: course.id,
-        lecon: course.lecon,
-        status: "non disponible",
-        reason: `dépend de: ${course.apres_cours_id.join(", ")}`
-      };
-    }
-
-    if (course.ordre_lecon && course.ordre_lecon > 1) {
-      return {
-        id: course.id,
-        lecon: course.lecon,
-        status: "non disponible",
-        reason: `ordre leçon ${course.ordre_lecon}`
-      };
-    }
-
+function getInitialAvailability(course, allCourses) {
+  if (course.apres_cours_id && course.apres_cours_id.length > 0) {
     return {
-      id: course.id,
-      lecon: course.lecon,
-      status: "disponible",
-      reason: "aucune dépendance bloquante"
+      status: "bloqué",
+      reason: `dépend de: ${course.apres_cours_id.join(", ")}`
     };
-  });
+  }
+
+  if (course.ordre_lecon && course.ordre_lecon > 1) {
+    const previousCourses = allCourses.filter(other =>
+      other.sous_branche === course.sous_branche &&
+      other.ordre_lecon > 0 &&
+      other.ordre_lecon < course.ordre_lecon
+    );
+
+    if (previousCourses.length > 0) {
+      return {
+        status: "bloqué",
+        reason: `attend ordre précédent dans ${course.sous_branche}`
+      };
+    }
+  }
+
+  return {
+    status: "plaçable",
+    reason: "aucun blocage initial"
+  };
 }
 
-function renderAvailability(rows) {
+function renderAvailabilityTable(courses) {
   const tbody = document.querySelector("#availabilityTable tbody");
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
-  rows.forEach(row => {
-    const tr = `
+  courses.forEach(course => {
+    const availability = getInitialAvailability(course, courses);
+
+    const row = `
       <tr>
-        <td>${row.id}</td>
-        <td>${row.lecon}</td>
-        <td>${row.status}</td>
-        <td>${row.reason}</td>
+        <td>${course.id}</td>
+        <td>${course.lecon}</td>
+        <td>${availability.status}</td>
+        <td>${availability.reason}</td>
       </tr>
     `;
-    tbody.innerHTML += tr;
+
+    tbody.innerHTML += row;
+  });
+}
+
+function dependenciesSatisfied(course, completed) {
+  if (!course.apres_cours_id || course.apres_cours_id.length === 0) {
+    return true;
+  }
+
+  return course.apres_cours_id.every(id => completed.has(id));
+}
+
+function ordreSatisfied(course, completed, courses) {
+  if (!course.ordre_lecon || course.ordre_lecon <= 1) {
+    return true;
+  }
+
+  const previous = courses.filter(c =>
+    c.sous_branche === course.sous_branche &&
+    c.ordre_lecon > 0 &&
+    c.ordre_lecon < course.ordre_lecon
+  );
+
+  return previous.every(c => completed.has(c.id));
+}
+
+function getAvailableCourses(courses, completed) {
+  return courses.filter(course => {
+    if (completed.has(course.id)) return false;
+    if (!dependenciesSatisfied(course, completed)) return false;
+    if (!ordreSatisfied(course, completed, courses)) return false;
+    return true;
   });
 }
 
 function simulateExecution(courses) {
-  const remaining = [...courses].sort((a, b) => String(a.id).localeCompare(String(b.id)));
   const completed = new Set();
   const result = [];
   let step = 1;
-  let guard = 0;
 
-  function canStart(course) {
-    if (!course.apres_cours_id || course.apres_cours_id.length === 0) {
-      return true;
-    }
-
-    return course.apres_cours_id.every(id => completed.has(id));
-  }
-
-  while (remaining.length > 0 && guard < 2000) {
-    guard++;
-
-    const available = remaining.filter(canStart);
+  while (completed.size < courses.length) {
+    const available = getAvailableCourses(courses, completed);
 
     if (available.length === 0) {
-      remaining.forEach(course => {
-        result.push({
-          step,
-          id: course.id,
-          lecon: course.lecon,
-          reason: "bloqué: dépendances non satisfaites"
-        });
-        step++;
+      result.push({
+        step: "ERREUR",
+        id: "---",
+        lecon: "cycle ou dépendance impossible",
+        reason: "vérifier dépendances"
       });
       break;
     }
 
     available.forEach(course => {
-      const idx = remaining.findIndex(x => x.id === course.id);
-      if (idx >= 0) remaining.splice(idx, 1);
-
       completed.add(course.id);
+
       result.push({
-        step,
+        step: step,
         id: course.id,
         lecon: course.lecon,
         reason: "contraintes satisfaites"
@@ -549,16 +603,9 @@ function isDebriefCourse(course) {
 }
 
 function isWeeklyDebriefCourse(course) {
-  const lesson = (course.lecon || "").toUpperCase();
-  const hasStageDependency =
-    (course.apres_cours_id && course.apres_cours_id.length > 0) ||
-    (course.doit_suivre && course.doit_suivre.length > 0);
-
-  return (
-    lesson.includes("DEBRIEF") &&
-    !lesson.includes("RETOUR STAGE") &&
-    !hasStageDependency
-  );
+  // Débriefing hebdomadaire injecté seulement si explicitement marqué dans les données.
+  // Cela évite de confondre un cours "debriefing retour stage" ou d'information.
+  return course.weekly_debrief === true;
 }
 
 function computeEarliestAllowedIso(startIso, value, unit) {
@@ -595,7 +642,7 @@ function computeLatestAllowedIso(startIso, value, unit) {
   } else {
     return null;
   }
-
+  
   return formatDateISO(d);
 }
 
@@ -973,6 +1020,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   let currentMinutes = 8 * 60;
   let sessionIndex = 0;
   let rotationOffset = 0;
+  const processedSessionIds = new Set();
 
   const weekUsage = {};
   const completedCourseIds = new Set();
@@ -1163,9 +1211,10 @@ function getRotatedGroups() {
     return allDays.findIndex(day => day.iso === isoDate);
   }
 
-  function findNextReadySessionIndex(startIndex) {
-    for (let i = startIndex; i < sessions.length; i++) {
+  function findNextReadySessionIndex() {
+    for (let i = 0; i < sessions.length; i++) {
       const session = sessions[i];
+      if (processedSessionIds.has(session.sessionId)) continue;
       const course = courseMap[session.courseId];
       if (!course) continue;
 
@@ -1177,7 +1226,7 @@ function getRotatedGroups() {
   }
 
 	let safety = 0;
-  while (sessionIndex < sessions.length) {
+  while (processedSessionIds.size < sessions.length) {
   safety++;
 if (safety > 10000) {
   console.error("Boucle infinie détectée", {
@@ -1187,17 +1236,12 @@ if (safety > 10000) {
 });
   break;
 }
-    const readyIndex = findNextReadySessionIndex(sessionIndex);
+    const readyIndex = findNextReadySessionIndex();
     if (readyIndex === -1) {
       break;
     }
 
-    if (readyIndex !== sessionIndex) {
-      const tmp = sessions[sessionIndex];
-      sessions[sessionIndex] = sessions[readyIndex];
-      sessions[readyIndex] = tmp;
-    }
-
+    sessionIndex = readyIndex;
     const session = sessions[sessionIndex];
 
     // CAS 0 : assermentation à date fixe
@@ -1230,7 +1274,7 @@ if (safety > 10000) {
         }
       }
 
-      sessionIndex++;
+      processedSessionIds.add(session.sessionId);
       continue;
     }
 
@@ -1238,13 +1282,13 @@ if (safety > 10000) {
     if (session.mode === "classe_entiere") {
       if (!ensureSessionFitsToday(
         session.duree,
-        session.jour_specifique,
+	        session.jour_specifique,
         session.courseId,
         session.max_par_semaine,
         session.earliestAllowedIso,
         session.latestAllowedIso
       )) {
-        sessionIndex++;
+        processedSessionIds.add(session.sessionId);
         continue;
       }
 
@@ -1277,7 +1321,7 @@ if (safety > 10000) {
         }
       }
 
-      sessionIndex++;
+      processedSessionIds.add(session.sessionId);
       continue;
     }
 
@@ -1291,7 +1335,7 @@ if (safety > 10000) {
         session.earliestAllowedIso,
         session.latestAllowedIso
       )) {
-        sessionIndex++;
+        processedSessionIds.add(session.sessionId);
         continue;
       }
 
@@ -1326,7 +1370,7 @@ if (safety > 10000) {
         }
       }
 
-      sessionIndex++;
+      processedSessionIds.add(session.sessionId);
       continue;
     }
 
@@ -1354,6 +1398,7 @@ while (
     ...candidate,
     remaining: candidate.duree
   });
+  processedSessionIds.add(candidate.sessionId);
 
   sessionIndex++;
 }
@@ -1520,14 +1565,52 @@ function renderPlanning(planning) {
   });
 
   parsed.sort((a, b) => {
-    if (a.sortableDate !== b.sortableDate) {
-      return a.sortableDate.localeCompare(b.sortableDate);
-    }
-    return a.startTime.localeCompare(b.startTime);
+    if (a.sortableDate !== b.sortableDate) return a.sortableDate.localeCompare(b.sortableDate);
+    if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
+    if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+    if (a.id !== b.id) return a.id.localeCompare(b.id);
+    return a.lecon.localeCompare(b.lecon);
   });
 
+  const merged = [];
+
   parsed.forEach(row => {
-    const tr = `
+    const last = merged[merged.length - 1];
+
+    if (
+      last &&
+      last.sortableDate === row.sortableDate &&
+      last.groupe === row.groupe &&
+      last.id === row.id &&
+      last.lecon === row.lecon &&
+      last.endTime === row.startTime
+    ) {
+      last.endTime = row.endTime;
+      last.duree += row.duree;
+    } else {
+      merged.push({
+        date: row.date,
+        sortableDate: row.sortableDate,
+        startTime: row.startTime,
+        endTime: row.endTime,
+        groupe: row.groupe,
+        id: row.id,
+        lecon: row.lecon,
+        duree: row.duree
+      });
+    }
+  });
+
+  merged.sort((a, b) => {
+      if (a.sortableDate !== b.sortableDate) return a.sortableDate.localeCompare(b.sortableDate);
+    if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+    if (a.groupe !== b.groupe) return a.groupe.localeCompare(b.groupe);
+    if (a.id !== b.id) return a.id.localeCompare(b.id);
+    return a.lecon.localeCompare(b.lecon);
+  });
+
+  merged.forEach(row => {
+    const html = `
       <tr>
         <td>${row.date}</td>
         <td>${row.startTime}-${row.endTime}</td>
@@ -1537,181 +1620,210 @@ function renderPlanning(planning) {
         <td>${row.duree}</td>
       </tr>
     `;
-    tbody.innerHTML += tr;
+    tbody.innerHTML += html;
   });
 }
 
-function getOpenDays(calendarDays) {
-  return calendarDays.filter(day => day.status === "ouvrable");
+async function loadData() {
+  const school = await fetch("data/school_params.json").then(r => r.json());
+  const courses = await fetch("data/courses.json").then(r => r.json());
+
+  const validation = validateCourses(courses);
+renderValidationReport(validation);
+
+if (validation.errors.length > 0) {
+  document.getElementById("summary").innerHTML = `
+    <p><b>Planification bloquée.</b></p>
+    <p>Corrigez d'abord les erreurs dans le catalogue.</p>
+  `;
+  renderOrderingTable(courses);
+  renderAvailabilityTable(courses);
+  renderSimulation(courses);
+  renderGroups([]);
+  renderRealSessionsTable([]);
+  renderPlanning([]);
+  return;
 }
 
-function minutesToTimeString(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function loadData() {
-  const dateDebut = document.getElementById("dateDebutInput").value;
-  const aspirants = Number(document.getElementById("aspirantsInput").value);
-  const assermentation = document.getElementById("assermentationInput").value;
-
-  if (!dateDebut || !assermentation || !aspirants) {
-    alert("Veuillez remplir date début, assermentation et nombre aspirants.");
-    return;
-  }
+  const dateDebut = document.getElementById("dateDebutInput").value || school.date_debut;
+  const nombreAspirants = Number(document.getElementById("aspirantsInput").value);
+  const assermentationDate = document.getElementById("assermentationInput").value || school.date_assermentation;
 
   const joursFeries = parseJoursFeries(document.getElementById("joursFeriesInput").value);
   const vacances = parseVacances(document.getElementById("vacancesInput").value);
   const stages = parseStages(document.getElementById("stagesInput").value);
 
-  const dateFin = addMonthsToDate(dateDebut, 8);
+  let totalMinutes = 0;
+  let totalSessions = 0;
+  let totalEncadrantsSimultanes = 0;
+  let totalVehicules = 0;
+  let totalSallesSupp = 0;
+  let totalCoursSansContrainte = 0;
+  let totalMinutesSansContrainte = 0;
+
+  const tbody = document.querySelector("#coursesTable tbody");
+  if (tbody) {
+    tbody.innerHTML = "";
+
+    courses.forEach(course => {
+      let groupes = 1;
+
+      if (course.division === "Oui") {
+        groupes = Math.ceil(nombreAspirants / course.participants);
+      }
+
+      let seances = 1;
+
+      if (course.simultane === "Non") {
+        seances = groupes;
+      }
+
+      const minutes = course.duree * seances;
+      const heures = (minutes / 60).toFixed(1);
+
+      let encadrantsTotal = course.encadrants;
+
+      if (course.simultane === "Oui") {
+        encadrantsTotal = course.encadrants * groupes;
+      }
+
+      const vehicules = Math.ceil(nombreAspirants / 13);
+
+      let sallesSup = 0;
+      if (course.simultane === "Oui") {
+        sallesSup = Math.max(groupes - 1, 0);
+      }
+
+      const contrainte = getConstraintLabel(course);
+      const sansContrainte = contrainte === "aucune contrainte";
+
+      totalMinutes += minutes;
+      totalSessions += seances;
+      totalEncadrantsSimultanes += encadrantsTotal;
+      totalVehicules += vehicules;
+      totalSallesSupp += sallesSup;
+
+      if (sansContrainte) {
+        totalCoursSansContrainte += 1;
+        totalMinutesSansContrainte += minutes;
+      }
+
+      const row = `
+        <tr>
+          <td>${course.id}</td>
+          <td>${course.lecon}</td>
+          <td>${course.type}</td>
+          <td>${course.duree}</td>
+          <td>${course.participants}</td>
+          <td>${course.division}</td>
+          <td>${course.simultane}</td>
+          <td>${groupes}</td>
+          <td>${seances}</td>
+          <td>${heures}</td>
+          <td>${encadrantsTotal}</td>
+          <td>${vehicules}</td>
+          <td>${sallesSup}</td>
+          <td>${contrainte}</td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+  }
+
+  const totalHours = totalMinutes / 60;
+  const minimumEndDate = addMonthsToDate(dateDebut, 8);
+  const heuresSansContrainte = (totalMinutesSansContrainte / 60).toFixed(1);
+
+  renderSpecialPeriods(assermentationDate, joursFeries, vacances, stages);
+
   const calendarDays = buildBaseCalendar(
     dateDebut,
-    formatDateISO(dateFin),
-    assermentation,
+    formatDateISO(minimumEndDate),
+    assermentationDate,
     joursFeries,
     vacances,
     stages
   );
 
-  renderSpecialPeriods(assermentation, joursFeries, vacances, stages);
+  const calendarStats = renderBaseCalendar(calendarDays);
+  const capacityStats = computeRealisticCapacity(calendarDays);
 
-  renderCalendar(calendarDays);
-  renderCalendarSummary(summarizeCalendar(calendarDays));
+  renderOrderingTable(courses);
+  renderAvailabilityTable(courses);
+  renderSimulation(courses);
 
-  fetch("data/courses.json")
-    .then(resp => resp.json())
-    .then(courses => {
-      const report = validateCourses(courses);
-      renderValidationReport(report);
+  const groups = computeSchoolGroups(courses, nombreAspirants);
+  renderGroups(groups);
 
-      const ordering = buildOrdering(courses);
-      renderOrdering(ordering);
+  const realSessions = buildRealSessions(courses, groups, nombreAspirants);
+  renderRealSessionsTable(realSessions);
 
-      const availability = buildAvailabilityAtStart(courses);
-      renderAvailability(availability);
+  const planning = buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants);
+  renderPlanning(planning);
 
-      renderSimulation(courses);
+  const capaciteHeuresStandard = capacityStats.standardHours;
+  const capaciteHeuresRealiste = capacityStats.realisticCapacity;
+  const ecartStandard = (capaciteHeuresStandard - totalHours).toFixed(1);
+  const ecartRealiste = (capaciteHeuresRealiste - totalHours).toFixed(1);
 
-      const groups = computeSchoolGroups(courses, aspirants);
-      renderGroups(groups);
+  const tientStandard = Number(ecartStandard) >= 0 ? "oui" : "non";
+  const tientRealiste = Number(ecartRealiste) >= 0 ? "oui" : "non";
 
-      const sessions = buildRealSessions(courses, groups, aspirants, dateDebut);
-      renderRealSessionsTable(sessions);
-
-      const planning = buildMultiGroupPlanning(courses, calendarDays, groups, aspirants);
-      renderPlanning(planning);
-
-      let totalMinutes = 0;
-      let totalMinutesSansContrainte = 0;
-      let totalSeances = 0;
-      let totalEncadrants = 0;
-      let totalVehicules = 0;
-      let totalSalles = 0;
-
-      const tbody = document.querySelector("#coursesTable tbody");
-      tbody.innerHTML = "";
-
-      courses.forEach(course => {
-        const division = course.division === "Oui";
-        const simultane = course.simultane === "Oui";
-        const participantsMax = Number(course.participants || 1);
-        const duree = Number(course.duree || 0);
-
-        let groupes = 1;
-        let seances = 1;
-
-        if (division) {
-          groupes = Math.ceil(aspirants / participantsMax);
-
-          if (simultane) {
-            seances = 1;
-          } else {
-            seances = groupes;
-          }
-        }
-
-        const minutes = duree * seances;
-        const heures = (minutes / 60).toFixed(1);
-
-        const row = `
-          <tr>
-            <td>${course.id}</td>
-            <td>${course.lecon}</td>
-            <td>${course.type}</td>
-            <td>${course.duree}</td>
-            <td>${course.participants}</td>
-            <td>${course.division}</td>
-            <td>${course.simultane}</td>
-            <td>${groupes}</td>
-            <td>${seances}</td>
-            <td>${heures}</td>
-            <td>${course.encadrants || 0}</td>
-            <td>${course.vehicules_d1 || 0}</td>
-            <td>${course.salles_supp || 0}</td>
-            <td>${getConstraintLabel(course)}</td>
-          </tr>
-        `;
-        tbody.innerHTML += row;
-
-        totalMinutes += minutes;
-        totalSeances += seances;
-        totalEncadrants += Number(course.encadrants || 0);
-        totalVehicules += Number(course.vehicules_d1 || 0);
-        totalSalles += Number(course.salles_supp || 0);
-
-        const hasConstraint =
-          (course.ordre_lecon && course.ordre_lecon > 0) ||
-          (course.apres_cours_id && course.apres_cours_id.length > 0) ||
-          (course.avant_cours_id && course.avant_cours_id.length > 0) ||
-          (course.delai_max_valeur !== null && course.delai_max_unite !== null) ||
-          (course.max_par_semaine !== null) ||
-          !!course.jour_specifique;
-
-        if (!hasConstraint) {
-          totalMinutesSansContrainte += minutes;
-        }
-      });
-
-      const totalHeures = (totalMinutes / 60).toFixed(1);
-      const totalJours = (totalMinutes / 480).toFixed(1);
-      const totalSemaines = (totalMinutes / 2520).toFixed(1);
-
-      const totalHeuresSansContrainte = (totalMinutesSansContrainte / 60).toFixed(1);
-      const totalJoursSansContrainte = (totalMinutesSansContrainte / 480).toFixed(1);
-      const totalSemainesSansContrainte = (totalMinutesSansContrainte / 2520).toFixed(1);
-
-      const minimumEndDate = addMonthsToDate(dateDebut, 8);
-
-      document.getElementById("summary").innerHTML = `
-      <p><b>Total cours catalogue :</b> ${courses.length}</p>
-      <p><b>Total séances réelles :</b> ${totalSeances}</p>
-      <p><b>Volume total :</b> ${totalMinutes} min (${totalHeures} h)</p>
-      <p><b>Charge théorique :</b> ${totalJours} jours (${totalSemaines} semaines)</p>
-      <p><b>Volume SANS contrainte :</b> ${totalMinutesSansContrainte} min (${totalHeuresSansContrainte} h)</p>
-      <p><b>Charge SANS contrainte :</b> ${totalJoursSansContrainte} jours (${totalSemainesSansContrainte} semaines)</p>
+  const summary = document.getElementById("summary");
+  if (summary) {
+    summary.innerHTML = `
+      <p><b>École :</b> ${school.nom_ecole}</p>
+      <p><b>Date début :</b> ${formatDateFR(new Date(dateDebut))}</p>
+      <p><b>Nombre d’aspirants :</b> ${nombreAspirants}</p>
+      <p><b>Total séances :</b> ${totalSessions}</p>
+      <p><b>Heures totales à placer :</b> ${totalHours.toFixed(1)}</p>
       <p><b>Date fin minimale (8 mois) :</b> ${formatDateFR(minimumEndDate)}</p>
-      <p><b>Encadrants cumulés (indicatif):</b> ${totalEncadrants}</p>
-      <p><b>Véhicules D1 cumulés (indicatif):</b> ${totalVehicules}</p>
-      <p><b>Salles supp. cumulées (indicatif):</b> ${totalSalles}</p>
+      <hr>
+      <p><b>Jours ouvrables disponibles :</b> ${calendarStats.countOuvrables}</p>
+      <p><b>Vendredis ouvrables :</b> ${capacityStats.fridayOpenDays}</p>
+      <p><b>Semaines avec jours ouvrables :</b> ${capacityStats.numberOfOpenWeeks}</p>
+      <p><b>Capacité standard (8h/jour) :</b> ${capaciteHeuresStandard.toFixed(1)} h</p>
+      <p><b>Retrait débriefings vendredi :</b> -${capacityStats.debriefHours.toFixed(1)} h</p>
+      <p><b>Retrait course à pied hebdomadaire :</b> -${capacityStats.runningHours.toFixed(1)} h</p>
+      <p><b>Capacité réaliste estimée :</b> ${capaciteHeuresRealiste.toFixed(1)} h</p>
+      <p><b>Écart standard capacité - charge :</b> ${ecartStandard} h</p>
+      <p><b>Écart réaliste capacité - charge :</b> ${ecartRealiste} h</p>
+      <p><b>Ça tient théoriquement dans 8 mois (standard) :</b> ${tientStandard}</p>
+      <p><b>Ça tient théoriquement dans 8 mois (réaliste) :</b> ${tientRealiste}</p>
+      <hr>
+      <p><b>Cours sans contrainte :</b> ${totalCoursSansContrainte}</p>
+      <p><b>Heures sans contrainte :</b> ${heuresSansContrainte}</p>
+      <p><b>Total encadrants simultanés (somme théorique) :</b> ${totalEncadrantsSimultanes}</p>
+      <p><b>Total véhicules D1 (somme théorique) :</b> ${totalVehicules}</p>
+      <p><b>Total salles supplémentaires (somme théorique) :</b> ${totalSallesSupp}</p>
     `;
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Erreur lors du chargement de data/courses.json");
-    });
+  }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const dateDebutInput = document.getElementById("dateDebutInput");
-  const assermentationInput = document.getElementById("assermentationInput");
+async function initializeForm() {
+  const school = await fetch("data/school_params.json").then(r => r.json());
 
-  if (dateDebutInput && !dateDebutInput.value) {
-    dateDebutInput.value = "2026-01-05";
-  }
+  document.getElementById("dateDebutInput").value = school.date_debut;
+  document.getElementById("aspirantsInput").value = school.nombre_aspirants;
+  document.getElementById("assermentationInput").value = school.date_assermentation;
 
-  if (assermentationInput && !assermentationInput.value) {
-    assermentationInput.value = "2026-09-04";
-  }
-});
+  const joursFeriesText = (school.jours_feries || [])
+    .map(item => item.day)
+    .join("\n");
+
+  const vacancesText = (school.vacances || [])
+    .map(item => `${item.start},${item.end}`)
+    .join("\n");
+
+  const stagesText = (school.stages || [])
+    .map(item => `${item.stage_id},${item.start},${item.end}`)
+    .join("\n");
+
+  document.getElementById("joursFeriesInput").value = joursFeriesText;
+  document.getElementById("vacancesInput").value = vacancesText;
+  document.getElementById("stagesInput").value = stagesText;
+
+  loadData();
+}
+
+window.addEventListener("DOMContentLoaded", initializeForm);

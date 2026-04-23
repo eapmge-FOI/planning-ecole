@@ -1009,7 +1009,10 @@ function createCourseBuckets(batchSessions) {
 }
 
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
-  const openDays = getOpenDays(calendarDays);
+  const openDays =
+  typeof getOpenDays === "function"
+    ? getOpenDays(calendarDays)
+    : calendarDays.filter(day => day.status === "ouvrable");
   const allDays = calendarDays;
   const schoolStartIso = calendarDays[0]?.iso;
   const sessions = buildRealSessions(courses, groups, nombreAspirants, schoolStartIso);

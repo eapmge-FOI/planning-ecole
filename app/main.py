@@ -20,6 +20,8 @@ def home(request: Request):
 
     summary = engine.school_load_summary()
     course_loads = engine.course_loads()
+    diagnostic = engine.constraint_diagnostic()
+    schedule = engine.generate_greedy_schedule()
 
     return templates.TemplateResponse(
         "index.html",
@@ -27,5 +29,7 @@ def home(request: Request):
             "request": request,
             "summary": summary,
             "course_loads": course_loads,
+            "diagnostic": diagnostic,
+            "schedule": schedule,
         },
     )

@@ -4277,7 +4277,7 @@
     "ordre_lecon": 5,
     "apres_cours_id": [],
     "avant_cours_id": [
-      "S1"
+      "AS1"
     ],
     "doit_suivre": [],
     "delai_min_valeur": null,
@@ -4301,7 +4301,7 @@
     "ordre_lecon": 6,
     "apres_cours_id": [],
     "avant_cours_id": [
-      "S1"
+      "AS1"
     ],
     "doit_suivre": [],
     "delai_min_valeur": null,
@@ -4484,7 +4484,7 @@
     "apres_cours_id": [],
     "avant_cours_id": [],
     "doit_suivre": [
-      "N6"
+      "AS1"
     ],
     "delai_min_valeur": null,
     "delai_min_unite": null,
@@ -4506,7 +4506,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "S1"
+      "AS1"
     ],
     "avant_cours_id": [],
     "doit_suivre": [],
@@ -4530,7 +4530,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "S1"
+      "AS1"
     ],
     "avant_cours_id": [],
     "doit_suivre": [],
@@ -4554,7 +4554,7 @@
     "simultane": "Non",
     "ordre_lecon": 0,
     "apres_cours_id": [
-      "S1"
+      "AS1"
     ],
     "avant_cours_id": [],
     "doit_suivre": [],

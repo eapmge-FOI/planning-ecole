@@ -76,5 +76,87 @@
             </tbody>
         </table>
     </div>
+
+    <h2>Diagnostic des contraintes</h2>
+    <div class="card">
+        <p><strong>Total cours :</strong> {{ diagnostic.total_cours }}</p>
+        <p><strong>Cours avec contraintes :</strong> {{ diagnostic.cours_avec_contraintes }}</p>
+        <p><strong>Densité de contraintes :</strong> {{ diagnostic.densite_contraintes }}%</p>
+
+        <h3>Références de prérequis inconnues</h3>
+        {% if diagnostic.prerequis_inconnus %}
+        <ul>
+            {% for item in diagnostic.prerequis_inconnus %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Aucune.</p>
+        {% endif %}
+
+        <h3>Cycles détectés</h3>
+        {% if diagnostic.cycles_detectes %}
+        <ul>
+            {% for cycle in diagnostic.cycles_detectes %}
+            <li>{{ " -> ".join(cycle) }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Aucun cycle détecté.</p>
+        {% endif %}
+
+        <h3>Cours goulots (plus de dépendants)</h3>
+        {% if diagnostic.cours_goulots %}
+        <ul>
+            {% for item in diagnostic.cours_goulots %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Aucun goulot significatif.</p>
+        {% endif %}
+    </div>
+
+    <h2>Planning automatique (heuristique v1)</h2>
+    <div class="card">
+        <p><strong>Période :</strong> {{ schedule.planning_start }} → {{ schedule.planning_end }}</p>
+        <p><strong>Séances planifiées :</strong> {{ schedule.scheduled|length }}</p>
+        <p><strong>Séances non planifiées :</strong> {{ schedule.unscheduled_session_ids|length }}</p>
+
+        {% if schedule.unscheduled_session_ids %}
+        <h3>Sessions non planifiées</h3>
+        <ul>
+            {% for session_id in schedule.unscheduled_session_ids[:20] %}
+            <li>{{ session_id }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h3>Premières sessions planifiées</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Début</th>
+                    <th>Cours</th>
+                    <th>Leçon</th>
+                    <th>Groupe</th>
+                    <th>Durée</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in schedule.scheduled[:30] %}
+                <tr>
+                    <td>{{ row.day }}</td>
+                    <td>{{ row.start_minute }}</td>
+                    <td>{{ row.parent_course_id }}</td>
+                    <td>{{ row.lecon }}</td>
+                    <td>{{ row.group_name }}</td>
+                    <td>{{ row.duration_minutes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

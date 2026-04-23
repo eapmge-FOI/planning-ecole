@@ -1010,9 +1010,17 @@ function createCourseBuckets(batchSessions) {
 
 function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants) {
   const openDays =
-  typeof getOpenDays === "function"
-    ? getOpenDays(calendarDays)
-    : calendarDays.filter(day => day.status === "ouvrable");
+    typeof getOpenDays === "function"
+      ? getOpenDays(calendarDays)
+      : calendarDays.filter(day => day.status === "ouvrable");
+  const toTime =
+    typeof minutesToTimeString === "function"
+      ? minutesToTimeString
+      : (minutes) => {
+          const h = Math.floor(minutes / 60);
+          const m = minutes % 60;
+          return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+        };
   const allDays = calendarDays;
   const schoolStartIso = calendarDays[0]?.iso;
   const sessions = buildRealSessions(courses, groups, nombreAspirants, schoolStartIso);
@@ -1028,17 +1036,17 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
   const weekUsage = {};
   const completedCourseIds = new Set();
   const remainingMinutesByCourse = {};
-  
-sessions.sort((a, b) => {
-  if (a.latestAllowedIso && !b.latestAllowedIso) return -1;
-  if (!a.latestAllowedIso && b.latestAllowedIso) return 1;
 
-  if (a.latestAllowedIso && b.latestAllowedIso) {
-    return a.latestAllowedIso.localeCompare(b.latestAllowedIso);
-  }
+  sessions.sort((a, b) => {
+    if (a.latestAllowedIso && !b.latestAllowedIso) return -1;
+    if (!a.latestAllowedIso && b.latestAllowedIso) return 1;
 
-  return 0;
-});
+    if (a.latestAllowedIso && b.latestAllowedIso) {
+      return a.latestAllowedIso.localeCompare(b.latestAllowedIso);
+    }
+
+    return 0;
+  });
 
   sessions.forEach(session => {
     if (!remainingMinutesByCourse[session.courseId]) {
@@ -1047,15 +1055,496 @@ sessions.sort((a, b) => {
     remainingMinutesByCourse[session.courseId] += session.duree;
   });
 
-function markCourseMinutes(courseId, minutes) {
-  if (remainingMinutesByCourse[courseId] === undefined) return;
+  function markCourseMinutes(courseId, minutes) {
+    if (remainingMinutesByCourse[courseId] === undefined) return;
 
-  remainingMinutesByCourse[courseId] -= minutes;
+    remainingMinutesByCourse[courseId] -= minutes;
 
-  if (remainingMinutesByCourse[courseId] <= 0) {
-    remainingMinutesByCourse[courseId] = 0;
-    completedCourseIds.add(courseId);
+    if (remainingMinutesByCourse[courseId] <= 0) {
+      remainingMinutesByCourse[courseId] = 0;
+      completedCourseIds.add(courseId);
+    }
   }
+
+  function addWeekUsage(courseId, isoWeek) {
+    if (!weekUsage[courseId]) weekUsage[courseId] = {};
+    if (!weekUsage[courseId][isoWeek]) weekUsage[courseId][isoWeek] = 0;
+    weekUsage[courseId][isoWeek] += 1;
+  }
+
+  function getWeekUsage(courseId, isoWeek) {
+    return weekUsage[courseId]?.[isoWeek] || 0;
+  }
+
+  function getIsoWeekForOpenDay(index) {
+    if (index < 0 || index >= openDays.length) return null;
+    return getWeekKeyFromISO(openDays[index].iso);
+  }
+
+  function nextSlot() {
+    if (currentMinutes >= 12 * 60 && currentMinutes < 13 * 60 + 30) {
+      currentMinutes = 13 * 60 + 30;
+    }
+
+    if (currentMinutes >= 17 * 60 + 30) {
+      dayIndex++;
+      currentMinutes = 8 * 60;
+    }
+  }
+
+  function moveToNextDay() {
+    dayIndex++;
+    currentMinutes = 8 * 60;
+  }
+
+  function findNextValidDayIndex(startIndex, jourSpecifique) {
+    let idx = startIndex;
+
+    while (idx < openDays.length) {
+      const day = openDays[idx];
+
+      if (!jourSpecifique) return idx;
+      if (day.jour.toLowerCase() === String(jourSpecifique).toLowerCase()) return idx;
+
+      idx++;
+    }
+
+    return idx;
+  }
+
+  function findNextValidDayIndexWithConstraints(
+    startIndex,
+    jourSpecifique,
+    courseId,
+    maxParSemaine,
+    earliestAllowedIso,
+    latestAllowedIso
+  ) {
+    let idx = findNextValidDayIndex(startIndex, jourSpecifique);
+
+    while (idx < openDays.length) {
+      const day = openDays[idx];
+
+      if (earliestAllowedIso && day.iso < earliestAllowedIso) {
+        idx = findNextValidDayIndex(idx + 1, jourSpecifique);
+        continue;
+      }
+
+      if (latestAllowedIso && day.iso > latestAllowedIso) {
+        return openDays.length;
+      }
+
+      if (maxParSemaine !== null && maxParSemaine !== undefined) {
+        const isoWeek = getIsoWeekForOpenDay(idx);
+        if (getWeekUsage(courseId, isoWeek) >= maxParSemaine) {
+          idx = findNextValidDayIndex(idx + 1, jourSpecifique);
+          continue;
+        }
+      }
+
+      return idx;
+    }
+
+    return idx;
+  }
+
+  function getRemainingTeachMinutesToday(fromMinutes) {
+    if (fromMinutes < 12 * 60) {
+      return (12 * 60 - fromMinutes) + (17 * 60 + 30 - (13 * 60 + 30));
+    }
+
+    if (fromMinutes >= 13 * 60 + 30 && fromMinutes < 17 * 60 + 30) {
+      return 17 * 60 + 30 - fromMinutes;
+    }
+
+    return 0;
+  }
+
+  function ensureSessionFitsToday(
+    duration,
+    jourSpecifique,
+    courseId,
+    maxParSemaine,
+    earliestAllowedIso,
+    latestAllowedIso
+  ) {
+    dayIndex = findNextValidDayIndexWithConstraints(
+      dayIndex,
+      jourSpecifique,
+      courseId,
+      maxParSemaine,
+      earliestAllowedIso,
+      latestAllowedIso
+    );
+
+    if (dayIndex >= openDays.length) return false;
+
+    // Pause midi
+    if (currentMinutes >= CONFIG.LUNCH_START && currentMinutes < CONFIG.LUNCH_END) {
+      currentMinutes = CONFIG.LUNCH_END;
+    }
+
+    // Fin de journée
+    if (currentMinutes >= CONFIG.DAY_END) {
+      moveToNextDay();
+      return ensureSessionFitsToday(
+        duration,
+        jourSpecifique,
+        courseId,
+        maxParSemaine,
+        earliestAllowedIso,
+        latestAllowedIso
+      );
+    }
+
+    const remaining = getRemainingTeachMinutesToday(currentMinutes);
+
+    if (duration > remaining) {
+      moveToNextDay();
+      return ensureSessionFitsToday(
+        duration,
+        jourSpecifique,
+        courseId,
+        maxParSemaine,
+        earliestAllowedIso,
+        latestAllowedIso
+      );
+    }
+
+    return true;
+  }
+
+  function getRotatedGroups() {
+    return groups.map((_, i) => groups[(i + rotationOffset) % groups.length]);
+  }
+
+  function findDayIndexByIso(isoDate) {
+    return allDays.findIndex(day => day.iso === isoDate);
+  }
+
+  function findNextReadySessionIndex() {
+    for (let i = 0; i < sessions.length; i++) {
+      const session = sessions[i];
+      if (processedSessionIds.has(session.sessionId)) continue;
+      const course = courseMap[session.courseId];
+      if (!course) continue;
+
+      if (courseIsReady(course, completedCourseIds, courseMap)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  let safety = 0;
+  while (processedSessionIds.size < sessions.length) {
+    safety++;
+    if (safety > 10000) {
+      console.error("Boucle infinie détectée", {
+        sessionIndex,
+        dayIndex,
+        currentMinutes
+      });
+      break;
+    }
+
+    const readyIndex = findNextReadySessionIndex();
+    if (readyIndex === -1) {
+      break;
+    }
+
+    sessionIndex = readyIndex;
+    const session = sessions[sessionIndex];
+
+    // CAS 0 : assermentation à date fixe
+    if (session.mode === "fixed_full_day") {
+      const assermentationInput = document.getElementById("assermentationInput");
+      const fixedDate = assermentationInput ? assermentationInput.value : null;
+
+      if (fixedDate) {
+        const fixedDayIndex = findDayIndexByIso(fixedDate);
+        if (fixedDayIndex >= 0) {
+          const fixedDay = allDays[fixedDayIndex];
+
+          const blocks = [
+            ["08:00", "12:00", 240],
+            ["13:30", "17:30", 240]
+          ];
+
+          blocks.forEach(block => {
+            result.push({
+              date: fixedDay.dateFr,
+              time: `${block[0]}-${block[1]}`,
+              groupe: "classe entière",
+              id: session.courseId,
+              lecon: session.lecon,
+              duree: block[2]
+            });
+          });
+
+          markCourseMinutes(session.courseId, session.duree);
+        }
+      }
+
+      processedSessionIds.add(session.sessionId);
+      continue;
+    }
+
+    // CAS 1 : classe entière
+    if (session.mode === "classe_entiere") {
+      if (!ensureSessionFitsToday(
+        session.duree,
+        session.jour_specifique,
+        session.courseId,
+        session.max_par_semaine,
+        session.earliestAllowedIso,
+        session.latestAllowedIso
+      )) {
+        processedSessionIds.add(session.sessionId);
+        continue;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      if (session.max_par_semaine) addWeekUsage(session.courseId, isoWeek);
+
+      let remaining = session.duree;
+
+      while (remaining > 0) {
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
+        result.push({
+          date: openDays[dayIndex].dateFr,
+          time: toTime(start) + "-" + toTime(end),
+          groupe: "classe entière",
+          id: session.courseId,
+          lecon: session.lecon,
+          duree: slot
+        });
+
+        currentMinutes += slot;
+        remaining -= slot;
+        markCourseMinutes(session.courseId, slot);
+
+        nextSlot();
+        if (remaining > 0) {
+          dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        }
+      }
+
+      processedSessionIds.add(session.sessionId);
+      continue;
+    }
+
+    // CAS 2 : simultané
+    if (session.mode === "simultane") {
+      if (!ensureSessionFitsToday(
+        session.duree,
+        session.jour_specifique,
+        session.courseId,
+        session.max_par_semaine,
+        session.earliestAllowedIso,
+        session.latestAllowedIso
+      )) {
+        processedSessionIds.add(session.sessionId);
+        continue;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      if (session.max_par_semaine) addWeekUsage(session.courseId, isoWeek);
+
+      let remaining = session.duree;
+
+      while (remaining > 0) {
+        const slot = Math.min(30, remaining);
+        const start = currentMinutes;
+        const end = currentMinutes + slot;
+
+        session.groups.forEach(groupName => {
+          result.push({
+            date: openDays[dayIndex].dateFr,
+            time: toTime(start) + "-" + toTime(end),
+            groupe: groupName,
+            id: session.courseId,
+            lecon: session.lecon,
+            duree: slot
+          });
+        });
+
+        currentMinutes += slot;
+        remaining -= slot;
+        markCourseMinutes(session.courseId, slot);
+
+        nextSlot();
+        if (remaining > 0) {
+          dayIndex = findNextValidDayIndex(dayIndex, session.jour_specifique);
+        }
+      }
+
+      processedSessionIds.add(session.sessionId);
+      continue;
+    }
+
+    // CAS 3 : non simultané continu
+    const batchJour = session.jour_specifique || "";
+    const batch = [];
+
+    while (
+      sessionIndex < sessions.length &&
+      sessions[sessionIndex].mode === "non_simultane"
+    ) {
+      const candidate = sessions[sessionIndex];
+      const candidateCourse = courseMap[candidate.courseId];
+
+      if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
+        break;
+      }
+
+      if ((candidate.jour_specifique || "") !== batchJour) {
+        break;
+      }
+
+      batch.push({
+        ...candidate,
+        remaining: candidate.duree
+      });
+      processedSessionIds.add(candidate.sessionId);
+
+      sessionIndex++;
+    }
+
+    const buckets = {};
+    batch.forEach(s => {
+      if (!buckets[s.courseId]) buckets[s.courseId] = [];
+      buckets[s.courseId].push(s);
+    });
+
+    const courseIds = Object.keys(buckets);
+
+    while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
+      const rotatedGroups = getRotatedGroups();
+
+      const activeSessions = [];
+      courseIds.forEach(courseId => {
+        const nextSession = buckets[courseId].find(s => s.remaining > 0);
+        if (nextSession) activeSessions.push(nextSession);
+      });
+
+      const selectedSessions = activeSessions.slice(0, groups.length);
+      if (selectedSessions.length === 0) break;
+
+      const representative = selectedSessions[0];
+
+      const waveAssignments = rotatedGroups.map((group, idx) => ({
+        groupName: group.name,
+        session: selectedSessions[idx] || null
+      }));
+
+      const waveDuration = Math.max(
+        ...waveAssignments.map(a => (a.session ? a.session.remaining : 0)),
+        0
+      );
+
+      if (!ensureSessionFitsToday(
+        waveDuration,
+        batchJour,
+        representative.courseId,
+        representative.max_par_semaine,
+        representative.earliestAllowedIso,
+        representative.latestAllowedIso
+      )) {
+        break;
+      }
+
+      const isoWeek = getIsoWeekForOpenDay(dayIndex);
+      selectedSessions.forEach(s => {
+        if (s.max_par_semaine) addWeekUsage(s.courseId, isoWeek);
+      });
+
+      while (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
+        const start = currentMinutes;
+        const end = currentMinutes + 30;
+
+        waveAssignments.forEach(assignment => {
+          if (assignment.session && assignment.session.remaining > 0) {
+            result.push({
+              date: openDays[dayIndex].dateFr,
+              time: toTime(start) + "-" + toTime(end),
+              groupe: assignment.groupName,
+              id: assignment.session.courseId,
+              lecon: assignment.session.lecon,
+              duree: 30
+            });
+
+            assignment.session.remaining -= 30;
+            markCourseMinutes(assignment.session.courseId, 30);
+          } else {
+            result.push({
+              date: openDays[dayIndex].dateFr,
+              time: toTime(start) + "-" + toTime(end),
+              groupe: assignment.groupName,
+              id: "",
+              lecon: "à dispo des instructeurs",
+              duree: 30
+            });
+          }
+        });
+
+        currentMinutes += 30;
+
+        if (waveAssignments.some(a => a.session && a.session.remaining > 0)) {
+          nextSlot();
+          dayIndex = findNextValidDayIndex(dayIndex, batchJour);
+        }
+      }
+
+      rotationOffset = (rotationOffset + 1) % groups.length;
+    }
+
+    // une fois le batch fini, marquer les cours complètement terminés
+    courseIds.forEach(courseId => {
+      if ((remainingMinutesByCourse[courseId] || 0) <= 0) {
+        completedCourseIds.add(courseId);
+      }
+    });
+  }
+
+  // Injection du débriefing en fin de vendredi
+  const debriefCourse = courses.find(c => isWeeklyDebriefCourse(c));
+  if (debriefCourse) {
+    const fridayDays = openDays.filter(day => day.jour.toLowerCase() === "vendredi");
+
+    fridayDays.forEach(day => {
+      const sameDayRows = result.filter(r => r.date === day.dateFr);
+
+      let latestEnd = "16:30";
+
+      sameDayRows.forEach(r => {
+        const end = r.time.split("-")[1];
+        if (end > latestEnd) latestEnd = end;
+      });
+
+      let startTime = "16:30";
+      let endTime = "17:30";
+
+      if (latestEnd > "16:30") {
+        startTime = "17:30";
+        endTime = "18:30";
+      }
+
+      result.push({
+        date: day.dateFr,
+        time: `${startTime}-${endTime}`,
+        groupe: "classe entière",
+        id: debriefCourse.id,
+        lecon: debriefCourse.lecon,
+        duree: 60
+      });
+    });
+  }
+
+  return result;
 }
 
   function addWeekUsage(courseId, isoWeek) {

@@ -7,6 +7,7 @@ from datetime import date
 from enum import Enum
 from math import ceil
 from pathlib import Path
+from typing import List, Optional
 from typing import Dict, List, Optional, Set
 
 
@@ -33,24 +34,7 @@ class Holiday:
 class VacationPeriod:
     start: date
     end: date
-    label: str = "vacances"
-
-    def contains(self, day: date) -> bool:
-        return self.start <= day <= self.end
-
-
-@dataclass
-class StagePeriod:
-    stage_id: str
-    start: date
-    end: date
-    label: str = "stage"
-
-    def contains(self, day: date) -> bool:
-        return self.start <= day <= self.end
-
-
-@dataclass
+@@ -54,115 +54,165 @@ class StagePeriod:
 class SchoolParams:
     nom_ecole: str
     date_debut: date
@@ -216,72 +200,7 @@ def add_months(base_date: date, months: int) -> date:
 
 
 def parse_date(value: str) -> date:
-    return date.fromisoformat(value.strip())
-
-
-def parse_optional_int(value: str) -> Optional[int]:
-    value = value.strip()
-    if not value:
-        return None
-    return int(value)
-
-
-def parse_optional_str(value: str) -> Optional[str]:
-    value = value.strip()
-    if not value:
-        return None
-    return value
-
-
-def parse_id_list(value: str) -> List[str]:
-    value = value.strip()
-    if not value:
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def load_school_params(filepath: str) -> SchoolParams:
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    jours_feries = [
-        Holiday(
-            day=parse_date(item["day"]),
-            label=item.get("label", "jour férié"),
-        )
-        for item in data.get("jours_feries", [])
-    ]
-
-    vacances = [
-        VacationPeriod(
-            start=parse_date(item["start"]),
-            end=parse_date(item["end"]),
-            label=item.get("label", "vacances"),
-        )
-        for item in data.get("vacances", [])
-    ]
-
-    stages = [
-        StagePeriod(
-            stage_id=item["stage_id"],
-            start=parse_date(item["start"]),
-            end=parse_date(item["end"]),
-            label=item.get("label", "stage"),
-        )
-        for item in data.get("stages", [])
-    ]
-
-    return SchoolParams(
-        nom_ecole=data["nom_ecole"],
-        date_debut=parse_date(data["date_debut"]),
-        nombre_aspirants=int(data["nombre_aspirants"]),
-        date_assermentation=parse_date(data["date_assermentation"]),
-        jours_feries=jours_feries,
-        vacances=vacances,
-        stages=stages,
-        duree_min_mois=int(data.get("duree_min_mois", 8)),
-    )
-
+@@ -235,64 +285,81 @@ def load_school_params(filepath: str) -> SchoolParams:
 
 def load_courses(filepath: str) -> List[CourseTemplate]:
     courses: List[CourseTemplate] = []
@@ -363,41 +282,7 @@ class PlanningEngine:
         groups = self.calculate_groups(course)
         sessions: List[GeneratedSession] = []
 
-        if groups == 1:
-            return [
-                GeneratedSession(
-                    parent_course_id=course.identifiant_cours,
-                    session_id=f"{course.identifiant_cours}-CE",
-                    group_name="classe entière",
-                    duree_minutes=course.duree_minutes,
-                )
-            ]
-
-        for i in range(1, groups + 1):
-            sessions.append(
-                GeneratedSession(
-                    parent_course_id=course.identifiant_cours,
-                    session_id=f"{course.identifiant_cours}-G{i}",
-                    group_name=f"groupe {i}",
-                    duree_minutes=course.duree_minutes,
-                )
-            )
-
-        return sessions
-
-    def course_loads(self) -> List[CourseLoad]:
-        rows: List[CourseLoad] = []
-
-        for course in self.courses:
-            groups = self.calculate_groups(course)
-            minutes = course.duree_minutes * groups
-
-            rows.append(
-                CourseLoad(
-                    identifiant_cours=course.identifiant_cours,
-                    lecon=course.lecon,
-                    nombre_groupes=groups,
-                    nombre_seances_reelles=groups,
+@@ -334,42 +401,381 @@ class PlanningEngine:
                     volume_total_minutes=minutes,
                     volume_total_heures=minutes / 60,
                     sans_contrainte=course.is_without_special_constraint,

@@ -1777,7 +1777,40 @@ if (typeof renderBaseCalendar === "function") {
     }
   }
 }
-  const capacityStats = computeRealisticCapacity(calendarDays);
+  let capacityStats = {
+  openDays: calendarStats.countOuvrables || 0,
+  fridayOpenDays: 0,
+  numberOfOpenWeeks: 0,
+  standardHours: (calendarStats.countOuvrables || 0) * 8,
+  debriefHours: 0,
+  runningHours: 0,
+  realisticCapacity: (calendarStats.countOuvrables || 0) * 8
+};
+
+if (typeof computeRealisticCapacity === "function") {
+  capacityStats = computeRealisticCapacity(calendarDays);
+} else {
+  // Fallback défensif si le fichier JS a été copié partiellement.
+  console.warn("computeRealisticCapacity introuvable, fallback vers calcul simple.");
+  const openDays = calendarDays.filter(day => day.status === "ouvrable");
+  const fridayOpenDays = openDays.filter(day => day.dayOfWeek === 5).length;
+  const openWeeks = new Set(openDays.map(day => getWeekKeyFromISO(day.iso)));
+  const numberOfOpenWeeks = openWeeks.size;
+  const standardHours = openDays.length * 8;
+  const debriefHours = fridayOpenDays * 1;
+  const runningHours = numberOfOpenWeeks * 1.5;
+  const realisticCapacity = standardHours - debriefHours - runningHours;
+
+  capacityStats = {
+    openDays: openDays.length,
+    fridayOpenDays,
+    numberOfOpenWeeks,
+    standardHours,
+    debriefHours,
+    runningHours,
+    realisticCapacity
+  };
+}
 
   renderOrderingTable(courses);
   renderAvailabilityTable(courses);

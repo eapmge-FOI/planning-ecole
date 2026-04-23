@@ -1745,7 +1745,38 @@ if (validation.errors.length > 0) {
     stages
   );
 
-  const calendarStats = renderBaseCalendar(calendarDays);
+  let calendarStats = {
+  countOuvrables: 0,
+  countWeekend: 0,
+  countFeries: 0,
+  countVacances: 0,
+  countStages: 0,
+  countAssermentation: 0
+};
+
+if (typeof renderBaseCalendar === "function") {
+  calendarStats = renderBaseCalendar(calendarDays);
+} else {
+  // Fallback défensif si le fichier JS a été copié partiellement.
+  console.warn("renderBaseCalendar introuvable, fallback vers renderCalendar + summarizeCalendar.");
+  if (typeof renderCalendar === "function") {
+    renderCalendar(calendarDays);
+  }
+  if (typeof summarizeCalendar === "function") {
+    const summary = summarizeCalendar(calendarDays);
+    calendarStats = {
+      countOuvrables: summary.ouvrable || 0,
+      countWeekend: summary.weekend || 0,
+      countFeries: summary.ferie || 0,
+      countVacances: summary.vacances || 0,
+      countStages: summary.stage || 0,
+      countAssermentation: summary.assermentation || 0
+    };
+    if (typeof renderCalendarSummary === "function") {
+      renderCalendarSummary(summary);
+    }
+  }
+}
   const capacityStats = computeRealisticCapacity(calendarDays);
 
   renderOrderingTable(courses);

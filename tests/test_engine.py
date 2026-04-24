@@ -10,6 +10,31 @@ from app.engine import (
     load_school_params,
 )
 
+def test_unscheduled_details_contains_dependency_reason():
+    school = SchoolParams(
+        nom_ecole="Ecole test",
+        date_debut=date(2026, 1, 5),
+        nombre_aspirants=30,
+        date_assermentation=date(2026, 9, 4),
+    )
+
+    dependent = CourseTemplate(
+        branche="Bloc",
+        sous_branche="B1",
+        type=CourseType.THEORIQUE,
+        identifiant_cours="D1",
+        lecon="Dépend d'un cours inconnu",
+        duree_minutes=60,
+        participants_max=30,
+        apres_cours_id=["X999"],
+    )
+
+    engine = PlanningEngine(school=school, courses=[dependent])
+    result = engine.generate_greedy_schedule(months=1)
+
+    assert len(result.unscheduled_session_ids) == 1
+    assert len(result.unscheduled_details) == 1
+    assert result.unscheduled_details[0].primary_reason == "dependency_unknown"
 
 def test_calculate_groups():
     school = SchoolParams(

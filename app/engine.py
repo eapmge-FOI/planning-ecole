@@ -8,6 +8,7 @@ from enum import Enum
 from math import ceil
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+from collections import Counter, defaultdict
 
 
 class CourseType(str, Enum):
@@ -182,6 +183,13 @@ class ScheduledSession:
     start_minute: int
     duration_minutes: int
 
+@dataclass
+class UnscheduledSessionDiagnostic:
+    session_id: str
+    parent_course_id: str
+    group_name: str
+    reasons: Dict[str, int]
+    primary_reason: str
 
 @dataclass
 class SchedulingResult:
@@ -189,6 +197,7 @@ class SchedulingResult:
     unscheduled_session_ids: List[str]
     planning_start: date
     planning_end: date
+    unscheduled_details: List[UnscheduledSessionDiagnostic] = field(default_factory=list)
 
 
 def add_months(base_date: date, months: int) -> date:
@@ -504,67 +513,89 @@ class PlanningEngine:
         bottlenecks = [node for node, value in in_degree.items() if value == max_in]
         return sorted(bottlenecks)
 
-    def generate_greedy_schedule(self, months: Optional[int] = None) -> SchedulingResult:
-        months = months or self.school.duree_min_mois
-        planning_start = self.school.date_debut
-        planning_end = add_months(planning_start, months)
+def generate_greedy_schedule(self, months: Optional[int] = None) -> SchedulingResult:
+    months = months or self.school.duree_min_mois
+    planning_start = self.school.date_debut
+    planning_end = add_months(planning_start, months)
 
-        sessions: List[GeneratedSession] = []
-        ordered_courses = self._order_courses_for_scheduling()
-        for course in ordered_courses:
-            sessions.extend(self.generate_sessions_for_course(course))
+    sessions: List[GeneratedSession] = []
+    ordered_courses = self._order_courses_for_scheduling()
+    for course in ordered_courses:
+        sessions.extend(self.generate_sessions_for_course(course))
 
-        scheduled: List[ScheduledSession] = []
-        self._scheduled_by_id: Dict[str, ScheduledSession] = {}
-        scheduled_ids: Set[str] = set()
-        sessions_by_course: Dict[str, List[GeneratedSession]] = {}
-        for session in sessions:
-            sessions_by_course.setdefault(session.parent_course_id, []).append(session)
+    scheduled: List[ScheduledSession] = []
+    self._scheduled_by_id: Dict[str, ScheduledSession] = {}
+    scheduled_ids: Set[str] = set()
+    sessions_by_course: Dict[str, List[GeneratedSession]] = {}
+    for session in sessions:
+        sessions_by_course.setdefault(session.parent_course_id, []).append(session)
 
-        sessions_by_week_course: Dict[str, int] = {}
-        occupied_slots: Set[tuple[date, int, str]] = set()
-        course_cursor = 0
+    sessions_by_week_course: Dict[str, int] = {}
+    occupied_slots: Set[tuple[date, int, str]] = set()
+    course_cursor = 0
 
-        for current_day in self._iter_planning_days(planning_start, planning_end):
-            if self._is_day_blocked(current_day):
+    # NEW: compteur des causes d'échec par session
+    failure_reasons: Dict[str, Counter] = defaultdict(Counter)
+
+    for current_day in self._iter_planning_days(planning_start, planning_end):
+        if self._is_day_blocked(current_day):
+            continue
+
+        week_key = current_day.isocalendar()
+        for start_minute in self.DEFAULT_SLOT_STARTS:
+            candidate = self._pick_next_schedulable_session(
+                ordered_courses=ordered_courses,
+                start_index=course_cursor,
+                current_day=current_day,
+                week_key=f"{week_key.year}-W{week_key.week}",
+                sessions_by_course=sessions_by_course,
+                scheduled_ids=scheduled_ids,
+                sessions_by_week_course=sessions_by_week_course,
+                occupied_slots=occupied_slots,
+                start_minute=start_minute,
+                failure_reasons=failure_reasons,  # NEW
+            )
+            if candidate is None:
                 continue
 
-            week_key = current_day.isocalendar()
-            for start_minute in self.DEFAULT_SLOT_STARTS:
-                candidate = self._pick_next_schedulable_session(
-                    ordered_courses=ordered_courses,
-                    start_index=course_cursor,
-                    current_day=current_day,
-                    week_key=f"{week_key.year}-W{week_key.week}",
-                    sessions_by_course=sessions_by_course,
-                    scheduled_ids=scheduled_ids,
-                    sessions_by_week_course=sessions_by_week_course,
-                    occupied_slots=occupied_slots,
-                    start_minute=start_minute,
-                )
-                if candidate is None:
-                    continue
+            scheduled.append(candidate)
+            self._scheduled_by_id[candidate.session_id] = candidate
+            scheduled_ids.add(candidate.session_id)
+            parent_idx = next(
+                (idx for idx, c in enumerate(ordered_courses) if c.identifiant_cours == candidate.parent_course_id),
+                0,
+            )
+            course_cursor = (parent_idx + 1) % max(len(ordered_courses), 1)
+            weekly_key = f"{candidate.parent_course_id}:{week_key.year}-W{week_key.week}"
+            sessions_by_week_course[weekly_key] = sessions_by_week_course.get(weekly_key, 0) + 1
+            occupied_slots.add((candidate.day, candidate.start_minute, candidate.group_name))
 
-                scheduled.append(candidate)
-                self._scheduled_by_id[candidate.session_id] = candidate
-                scheduled_ids.add(candidate.session_id)
-                parent_idx = next(
-                    (idx for idx, c in enumerate(ordered_courses) if c.identifiant_cours == candidate.parent_course_id),
-                    0,
-                )
-                course_cursor = (parent_idx + 1) % max(len(ordered_courses), 1)
-                weekly_key = f"{candidate.parent_course_id}:{week_key.year}-W{week_key.week}"
-                sessions_by_week_course[weekly_key] = sessions_by_week_course.get(weekly_key, 0) + 1
-                occupied_slots.add((candidate.day, candidate.start_minute, candidate.group_name))
+    unscheduled_sessions = [s for s in sessions if s.session_id not in scheduled_ids]
+    unscheduled_ids = [s.session_id for s in unscheduled_sessions]
 
-        unscheduled = [session.session_id for session in sessions if session.session_id not in scheduled_ids]
-        self._scheduled_by_id = {}
-        return SchedulingResult(
-            scheduled=scheduled,
-            unscheduled_session_ids=unscheduled,
-            planning_start=planning_start,
-            planning_end=planning_end,
+    # NEW: diagnostic lisible pour l'UI
+    unscheduled_details: List[UnscheduledSessionDiagnostic] = []
+    for session in unscheduled_sessions:
+        reasons_counter = dict(failure_reasons.get(session.session_id, Counter()))
+        primary_reason = max(reasons_counter, key=reasons_counter.get) if reasons_counter else "no_slot_found"
+        unscheduled_details.append(
+            UnscheduledSessionDiagnostic(
+                session_id=session.session_id,
+                parent_course_id=session.parent_course_id,
+                group_name=session.group_name,
+                reasons=reasons_counter,
+                primary_reason=primary_reason,
+            )
         )
+
+    self._scheduled_by_id = {}
+    return SchedulingResult(
+        scheduled=scheduled,
+        unscheduled_session_ids=unscheduled_ids,
+        planning_start=planning_start,
+        planning_end=planning_end,
+        unscheduled_details=unscheduled_details,  # NEW
+    )
 
     def _order_courses_for_scheduling(self) -> List[CourseTemplate]:
         graph = self._build_prerequisite_graph()
@@ -614,76 +645,87 @@ class PlanningEngine:
             return True
         return False
 
-    def _pick_next_schedulable_session(
-        self,
-        ordered_courses: List[CourseTemplate],
-        start_index: int,
-        current_day: date,
-        week_key: str,
-        sessions_by_course: Dict[str, List[GeneratedSession]],
-        scheduled_ids: Set[str],
-        sessions_by_week_course: Dict[str, int],
-        occupied_slots: Set[tuple[date, int, str]],
-        start_minute: int,
-    ) -> Optional[ScheduledSession]:
-        if not ordered_courses:
-            return None
-
-        for offset in range(len(ordered_courses)):
-            course = ordered_courses[(start_index + offset) % len(ordered_courses)]
-            pending = [
-                s for s in sessions_by_course.get(course.identifiant_cours, []) if s.session_id not in scheduled_ids
-            ]
-            if not pending:
-                continue
-            for session in pending:
-                if not self._course_day_constraint_ok(course, current_day):
-                    continue
-                if not self._course_weekly_constraint_ok(course, week_key, sessions_by_week_course):
-                    continue
-                if not self._course_dependencies_satisfied(
-                    course=course,
-                    session=session,
-                    current_day=current_day,
-                    scheduled_ids=scheduled_ids,
-                    sessions_by_course=sessions_by_course,
-                ):
-                    continue
-                if (current_day, start_minute, session.group_name) in occupied_slots:
-                    continue
-
-                return ScheduledSession(
-                    session_id=session.session_id,
-                    parent_course_id=session.parent_course_id,
-                    lecon=self._course_map[session.parent_course_id].lecon,
-                    group_name=session.group_name,
-                    day=current_day,
-                    start_minute=start_minute,
-                    duration_minutes=session.duree_minutes,
-                )
-
+def _pick_next_schedulable_session(
+    self,
+    ordered_courses: List[CourseTemplate],
+    start_index: int,
+    current_day: date,
+    week_key: str,
+    sessions_by_course: Dict[str, List[GeneratedSession]],
+    scheduled_ids: Set[str],
+    sessions_by_week_course: Dict[str, int],
+    occupied_slots: Set[tuple[date, int, str]],
+    start_minute: int,
+    failure_reasons: Dict[str, Counter],  # NEW
+) -> Optional[ScheduledSession]:
+    if not ordered_courses:
         return None
 
-    def _course_dependencies_satisfied(
-        self,
-        course: CourseTemplate,
-        session: GeneratedSession,
-        current_day: date,
-        scheduled_ids: Set[str],
-        sessions_by_course: Dict[str, List[GeneratedSession]],
-    ) -> bool:
-        dependency_ids = course.apres_cours_id + course.doit_suivre_id
-        for prereq in dependency_ids:
-            if prereq not in sessions_by_course:
-                return False
-            prereq_sessions = sessions_by_course[prereq]
-            matched = self._find_matching_prereq_session(session, prereq_sessions, scheduled_ids)
-            if matched is None:
-                return False
-            prereq_course = self._course_map[prereq]
-            if not self._delay_constraint_ok(course, prereq_course, current_day, matched.day):
-                return False
-        return True
+    for offset in range(len(ordered_courses)):
+        course = ordered_courses[(start_index + offset) % len(ordered_courses)]
+        pending = [s for s in sessions_by_course.get(course.identifiant_cours, []) if s.session_id not in scheduled_ids]
+        if not pending:
+            continue
+
+        for session in pending:
+            if not self._course_day_constraint_ok(course, current_day):
+                failure_reasons[session.session_id]["day_constraint"] += 1
+                continue
+
+            if not self._course_weekly_constraint_ok(course, week_key, sessions_by_week_course):
+                failure_reasons[session.session_id]["weekly_limit"] += 1
+                continue
+
+            dep_ok, dep_reason = self._course_dependencies_satisfied(
+                course=course,
+                session=session,
+                current_day=current_day,
+                scheduled_ids=scheduled_ids,
+                sessions_by_course=sessions_by_course,
+            )
+            if not dep_ok:
+                failure_reasons[session.session_id][dep_reason] += 1
+                continue
+
+            if (current_day, start_minute, session.group_name) in occupied_slots:
+                failure_reasons[session.session_id]["slot_collision"] += 1
+                continue
+
+            return ScheduledSession(
+                session_id=session.session_id,
+                parent_course_id=session.parent_course_id,
+                lecon=self._course_map[session.parent_course_id].lecon,
+                group_name=session.group_name,
+                day=current_day,
+                start_minute=start_minute,
+                duration_minutes=session.duree_minutes,
+            )
+
+    return None
+
+def _course_dependencies_satisfied(
+    self,
+    course: CourseTemplate,
+    session: GeneratedSession,
+    current_day: date,
+    scheduled_ids: Set[str],
+    sessions_by_course: Dict[str, List[GeneratedSession]],
+) -> tuple[bool, str]:
+    dependency_ids = course.apres_cours_id + course.doit_suivre_id
+    for prereq in dependency_ids:
+        if prereq not in sessions_by_course:
+            return False, "dependency_unknown"
+
+        prereq_sessions = sessions_by_course[prereq]
+        matched = self._find_matching_prereq_session(session, prereq_sessions, scheduled_ids)
+        if matched is None:
+            return False, "dependency_not_scheduled"
+
+        prereq_course = self._course_map[prereq]
+        if not self._delay_constraint_ok(course, prereq_course, current_day, matched.day):
+            return False, "delay_window"
+
+    return True, ""
 
     def _find_matching_prereq_session(
         self,

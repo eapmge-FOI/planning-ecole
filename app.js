@@ -1386,32 +1386,44 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
       continue;
     }
 
-    // CAS 3 : non simultané continu
-    const batchJour = session.jour_specifique || "";
-    const batch = [];
+// CAS 3 : non simultané continu
+if (session.mode === "non_simultane") {
+  const batchJour = session.jour_specifique || "";
+  const batch = [];
 
-    while (
-      sessionIndex < sessions.length &&
-      sessions[sessionIndex].mode === "non_simultane"
-    ) {
-      const candidate = sessions[sessionIndex];
-      const candidateCourse = courseMap[candidate.courseId];
+  let sessionIndex = 0;
+  while (sessionIndex < sessions.length && sessions[sessionIndex].sessionId !== session.sessionId) {
+    sessionIndex++;
+  }
 
-      if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
-        break;
-      }
+while (
+  sessionIndex < sessions.length &&
+  sessions[sessionIndex].mode === "non_simultane"
+) {
+  const candidate = sessions[sessionIndex];
+  const candidateCourse = courseMap[candidate.courseId];
 
-      if ((candidate.jour_specifique || "") !== batchJour) {
-        break;
-      }
+  // 🔴 AJOUT CRITIQUE
+  if (!courseIsReady(candidateCourse, completedCourseIds, courseMap)) {
+    break;
+  }
 
-      batch.push({
-        ...candidate,
-        remaining: candidate.duree
-      });
-      processedSessionIds.add(candidate.sessionId);
+  if ((candidate.jour_specifique || "") !== batchJour) {
+    break;
+  }
 
-      sessionIndex++;
+  batch.push({
+    ...candidate,
+    remaining: candidate.duree
+  });
+
+  sessionIndex++;
+}
+
+    if (batch.length === 0) {
+      // Aucun batch exploitable: on saute cette session pour éviter un blocage global.
+      processedSessionIds.add(session.sessionId);
+      continue;
     }
 
     const buckets = {};
@@ -1422,6 +1434,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
     const courseIds = Object.keys(buckets);
 
+    let batchProgress = false;
     while (courseIds.some(courseId => buckets[courseId].some(s => s.remaining > 0))) {
       const rotatedGroups = getRotatedGroups();
 
@@ -1479,6 +1492,7 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
 
             assignment.session.remaining -= 30;
             markCourseMinutes(assignment.session.courseId, 30);
+            batchProgress = true;
           } else {
             result.push({
               date: openDays[dayIndex].dateFr,
@@ -1508,7 +1522,22 @@ function buildMultiGroupPlanning(courses, calendarDays, groups, nombreAspirants)
         completedCourseIds.add(courseId);
       }
     });
+
+    // Marquer uniquement les sessions réellement terminées.
+    batch.forEach(s => {
+      if (s.remaining <= 0) {
+        processedSessionIds.add(s.sessionId);
+      }
+    });
+
+    // En cas d'absence totale de progression, on saute une session pour éviter une boucle bloquée.
+    if (!batchProgress && batch.length > 0) {
+      processedSessionIds.add(batch[0].sessionId);
+    }
   }
+
+  continue;
+}
 
   // Injection du débriefing en fin de vendredi
   const debriefCourse = courses.find(c => isWeeklyDebriefCourse(c));

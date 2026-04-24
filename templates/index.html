@@ -123,14 +123,35 @@
         <p><strong>Séances planifiées :</strong> {{ schedule.scheduled|length }}</p>
         <p><strong>Séances non planifiées :</strong> {{ schedule.unscheduled_session_ids|length }}</p>
 
-        {% if schedule.unscheduled_session_ids %}
-        <h3>Sessions non planifiées</h3>
-        <ul>
-            {% for session_id in schedule.unscheduled_session_ids[:20] %}
-            <li>{{ session_id }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+{% if schedule.unscheduled_details %}
+<h3>Sessions non planifiées (avec raisons)</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Session</th>
+            <th>Cours</th>
+            <th>Groupe</th>
+            <th>Raison principale</th>
+            <th>Détails</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in schedule.unscheduled_details[:30] %}
+        <tr>
+            <td>{{ item.session_id }}</td>
+            <td>{{ item.parent_course_id }}</td>
+            <td>{{ item.group_name }}</td>
+            <td>{{ item.primary_reason }}</td>
+            <td>
+                {% for k, v in item.reasons.items() %}
+                    {{ k }} ({{ v }}){% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
         <h3>Premières sessions planifiées</h3>
         <table>

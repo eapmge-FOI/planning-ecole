@@ -1,207 +1,93 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
   <meta charset="UTF-8">
-  <title>Planning école police</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculateur de Charge École</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <div class="container">
+    <header>
+      <h1>📚 Calculateur de Charge Horaire</h1>
+      <p class="subtitle">Calcule le volume total de formation en fonction du nombre d'aspirants</p>
+    </header>
 
-  <h1>Planificateur école police</h1>
-
-  <div class="card">
-    <h2>Paramètres</h2>
-
-    <div style="margin-bottom: 10px;">
-      <label for="dateDebutInput">Date de début :</label>
-      <input type="date" id="dateDebutInput">
+    <div class="card">
+      <h2>Paramètres</h2>
+      <div class="input-group">
+        <label for="aspirantsInput">Nombre d'aspirants :</label>
+        <input type="number" id="aspirantsInput" min="1" value="35">
+      </div>
+      <button onclick="calculateLoad()" class="btn-primary">Calculer la charge</button>
     </div>
 
-    <div style="margin-bottom: 10px;">
-      <label for="aspirantsInput">Nombre d’aspirants :</label>
-      <input type="number" id="aspirantsInput" min="1" value="35">
+    <div class="card" id="summaryCard" style="display:none;">
+      <h2>📊 Résumé</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="label">Heures brutes de cours :</span>
+          <span class="value" id="totalHours">0</span>
+          <span class="unit">heures</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Heures à dispo instructeurs :</span>
+          <span class="value" id="disposoHours">0</span>
+          <span class="unit">heures</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total général :</span>
+          <span class="value" id="totalWithDispo">0</span>
+          <span class="unit">heures</span>
+        </div>
+      </div>
     </div>
 
-    <div style="margin-bottom: 10px;">
-      <label for="assermentationInput">Date d’assermentation :</label>
-      <input type="date" id="assermentationInput">
+    <div class="card" id="breakdownCard" style="display:none;">
+      <h2>🔍 Répartition détaillée</h2>
+      <div class="breakdown-grid">
+        <div class="breakdown-item">
+          <div class="breakdown-bar">
+            <div class="bar-segment common" id="commonBar"></div>
+          </div>
+          <span class="label">100% communes</span>
+          <span class="value" id="commonHours">0 h</span>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-bar">
+            <div class="bar-segment divided-2" id="divided2Bar"></div>
+          </div>
+          <span class="label">Divisées en 2 classes</span>
+          <span class="value" id="divided2Hours">0 h</span>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-bar">
+            <div class="bar-segment divided-3plus" id="divided3PlusBar"></div>
+          </div>
+          <span class="label">Divisées en 3+ classes</span>
+          <span class="value" id="divided3PlusHours">0 h</span>
+        </div>
+      </div>
     </div>
 
-    <div style="margin-bottom: 10px;">
-      <label for="joursFeriesInput">Jours fériés (une date par ligne, format YYYY-MM-DD) :</label><br>
-      <textarea id="joursFeriesInput" rows="5" cols="50"></textarea>
+    <div class="card" id="tableCard" style="display:none;">
+      <h2>📋 Détail des cours</h2>
+      <table id="coursesTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Branche</th>
+            <th>Leçon</th>
+            <th>Durée (min)</th>
+            <th>Groupes</th>
+            <th>Exécution</th>
+            <th>Heures totales</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
     </div>
-
-    <div style="margin-bottom: 10px;">
-      <label for="vacancesInput">Vacances (une période par ligne, format YYYY-MM-DD,YYYY-MM-DD) :</label><br>
-      <textarea id="vacancesInput" rows="5" cols="50"></textarea>
-    </div>
-
-    <div style="margin-bottom: 10px;">
-      <label for="stagesInput">Stages (une période par ligne, format ID,YYYY-MM-DD,YYYY-MM-DD) :</label><br>
-      <textarea id="stagesInput" rows="5" cols="50"></textarea>
-    </div>
-
-    <button onclick="loadData()">Calculer la charge école</button>
-  </div>
-
-  <div class="card">
-    <h2>Résumé</h2>
-    <div id="summary"></div>
-  </div>
-
-  <div class="card">
-    <h2>Périodes spéciales</h2>
-    <div id="specialPeriods"></div>
-  </div>
-
-  <div class="card">
-    <h2>Calendrier de base</h2>
-    <div id="calendarSummary"></div>
-    <table id="calendarTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Jour</th>
-          <th>Statut</th>
-          <th>Détail</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>Ordre de traitement des cours</h2>
-    <table id="orderingTable">
-      <thead>
-        <tr>
-          <th>Rang</th>
-          <th>ID</th>
-          <th>Leçon</th>
-          <th>Niveau</th>
-          <th>Raison</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>Disponibilité au début de l’école</h2>
-    <table id="availabilityTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Leçon</th>
-          <th>Statut</th>
-          <th>Raison</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-  <h2>Simulation logique d'exécution</h2>
-
-  <table id="simulationTable">
-    <thead>
-      <tr>
-        <th>Étape</th>
-        <th>ID</th>
-        <th>Leçon</th>
-        <th>Raison disponibilité</th>
-      </tr>
-    </thead>
-
-    <tbody></tbody>
-
-  </table>
-
-</div>
-
-<div class="card">
-  <h2>Validation des données</h2>
-  <div id="validationReport"></div>
-</div>
-  
-  <div class="card">
-  <h2>Groupes de la volée</h2>
-
-  <table id="groupsTable">
-    <thead>
-      <tr>
-        <th>Groupe</th>
-        <th>Libellé</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<div class="card">
-  <h2>Séances réelles générées</h2>
-
-  <table id="realSessionsTable">
-    <thead>
-      <tr>
-        <th>Session</th>
-        <th>Cours</th>
-        <th>Leçon</th>
-        <th>Mode</th>
-        <th>Cible</th>
-        <th>Durée</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>  
-
-<div class="card">
-  <h2>Planning généré (version simple)</h2>
-
-  <table id="planningTable">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Heure</th>
-        <th>Groupe</th>
-        <th>ID</th>
-        <th>Leçon</th>
-        <th>Durée</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-  <div class="card">
-    <h2>Cours et ressources</h2>
-
-    <table id="coursesTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Leçon</th>
-          <th>Type</th>
-          <th>Durée (min)</th>
-          <th>Capacité</th>
-          <th>Division</th>
-          <th>Simultané</th>
-          <th>Groupes</th>
-          <th>Séances</th>
-          <th>Heures</th>
-          <th>Encadrants</th>
-          <th>Véhicules D1</th>
-          <th>Salles supp.</th>
-          <th>Contrainte</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </div>
 
   <script src="app.js"></script>

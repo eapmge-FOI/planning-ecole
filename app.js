@@ -15,14 +15,55 @@ function calculateNumberOfGroups(course, nombreAspirants) {
   return Math.ceil(nombreAspirants / course.participants);
 }
 
-function getExecutionType(division, simultane) {
-  if (division === 'Non') {
-    return 'Commune';
-  }
-  if (simultane === 'Oui') {
-    return 'Simultané';
-  }
-  return 'Séquentiel';
+function matchDividedCourses(courses, nombreAspirants) {
+  // Séparer les cours divisés non-simultanés
+  const dividedNonSimCourses = courses
+    .map((course, index) => ({
+      ...course,
+      originalIndex: index,
+      numGroups: calculateNumberOfGroups(course, nombreAspirants)
+    }))
+    .filter(course => course.division === 'Oui' && course.simultane === 'Non');
+
+  // Créer des "slots" de durée pour le matching
+  const durationGroups = {};
+  dividedNonSimCourses.forEach(course => {
+    if (!durationGroups[course.duree]) {
+      durationGroups[course.duree] = [];
+    }
+    durationGroups[course.duree].push(course);
+  });
+
+  // Matching : créer des paires
+  const matched = new Set();
+  const pairs = []; // [ [cours1, cours2], [cours1, cours2], ... ]
+  const unmatched = []; // cours sans paire
+
+  Object.keys(durationGroups).forEach(duration => {
+    const coursesOfSameDuration = durationGroups[duration];
+    
+    // Créer des paires (cours1 avec cours2, cours3 avec cours4, etc.)
+    for (let i = 0; i < coursesOfSameDuration.length - 1; i += 2) {
+      const course1 = coursesOfSameDuration[i];
+      const course2 = coursesOfSameDuration[i + 1];
+      
+      pairs.push([course1, course2]);
+      matched.add(course1.originalIndex);
+      matched.add(course2.originalIndex);
+    }
+
+    // Si nombre impair, le dernier reste non-appairé
+    if (coursesOfSameDuration.length % 2 === 1) {
+      const lastCourse = coursesOfSameDuration[coursesOfSameDuration.length - 1];
+      unmatched.push(lastCourse);
+    }
+  });
+
+  return {
+    pairs,           // Cours appairés [[A, B], [C, D], ...]
+    unmatched,       // Cours non-appairés [E, F, ...]
+    matchedIndices: matched
+  };
 }
 
 async function calculateLoad() {
@@ -36,60 +77,152 @@ async function calculateLoad() {
   const courses = await loadCourses();
   const school = await loadSchoolParams();
 
+  // Faire le matching
+  const matchingResult = matchDividedCourses(courses, nombreAspirants);
+
   let totalMinutes = 0;
   let commonMinutes = 0;
   let divided2Minutes = 0;
   let divided3PlusMinutes = 0;
+  let unpairedMinutes = 0;
+  let coursesProcessed = 0;
 
-  const courseDetails = courses.map(course => {
-    const numGroups = calculateNumberOfGroups(course, nombreAspirants);
-    const executionType = getExecutionType(course.division, course.simultane);
-    
-    let courseMinutes;
+  const courseDetails = [];
+  const processedCourseIndices = new Set();
+
+  // 1. Traiter les cours non-divisés
+  courses.forEach((course, index) => {
     if (course.division === 'Non') {
-      // Pas de division = une seule session
-      courseMinutes = course.duree;
+      const courseMinutes = course.duree;
+      totalMinutes += courseMinutes;
       commonMinutes += courseMinutes;
-    } else if (course.simultane === 'Oui') {
-      // Division avec simultané = groupes en parallèle
-      courseMinutes = course.duree;
+      coursesProcessed++;
+      processedCourseIndices.add(index);
+
+      courseDetails.push({
+        id: course.id,
+        branche: course.branche,
+        lecon: course.lecon,
+        duree: course.duree,
+        participants: course.participants,
+        numGroups: 1,
+        executionType: 'Commune',
+        totalMinutes: courseMinutes,
+        totalHours: (courseMinutes / 60).toFixed(2)
+      });
+    }
+  });
+
+  // 2. Traiter les cours simultanés
+  courses.forEach((course, index) => {
+    if (course.division === 'Oui' && course.simultane === 'Oui') {
+      const numGroups = calculateNumberOfGroups(course, nombreAspirants);
+      const courseMinutes = course.duree;
+      totalMinutes += courseMinutes;
       commonMinutes += courseMinutes;
-    } else {
-      // Division sans simultané = groupes séquentiels
-      courseMinutes = course.duree * numGroups;
-      if (numGroups === 2) {
-        divided2Minutes += courseMinutes;
-      } else if (numGroups > 2) {
-        divided3PlusMinutes += courseMinutes;
-      }
+      coursesProcessed++;
+      processedCourseIndices.add(index);
+
+      courseDetails.push({
+        id: course.id,
+        branche: course.branche,
+        lecon: course.lecon,
+        duree: course.duree,
+        participants: course.participants,
+        numGroups: numGroups,
+        executionType: 'Simultané',
+        totalMinutes: courseMinutes,
+        totalHours: (courseMinutes / 60).toFixed(2)
+      });
+    }
+  });
+
+  // 3. Traiter les paires de cours (divisés non-simultanés appairés)
+  matchingResult.pairs.forEach(([course1, course2]) => {
+    const courseMinutes = course1.duree; // Même durée pour les deux
+    
+    // Compter les groupes pour déterminer la catégorie
+    const numGroups = course1.numGroups;
+    totalMinutes += courseMinutes;
+    
+    if (numGroups === 2) {
+      divided2Minutes += courseMinutes;
+    } else if (numGroups > 2) {
+      divided3PlusMinutes += courseMinutes;
     }
 
-    totalMinutes += courseMinutes;
+    coursesProcessed += 2;
+    processedCourseIndices.add(course1.originalIndex);
+    processedCourseIndices.add(course2.originalIndex);
 
-    return {
+    // Ajouter les deux cours avec info de pairing
+    courseDetails.push({
+      id: course1.id,
+      branche: course1.branche,
+      lecon: course1.lecon,
+      duree: course1.duree,
+      participants: course1.participants,
+      numGroups: numGroups,
+      executionType: 'Séquentiel (appairé)',
+      totalMinutes: courseMinutes,
+      totalHours: (courseMinutes / 60).toFixed(2)
+    });
+
+    courseDetails.push({
+      id: course2.id,
+      branche: course2.branche,
+      lecon: course2.lecon,
+      duree: course2.duree,
+      participants: course2.participants,
+      numGroups: numGroups,
+      executionType: 'Séquentiel (appairé)',
+      totalMinutes: courseMinutes,
+      totalHours: (courseMinutes / 60).toFixed(2)
+    });
+  });
+
+  // 4. Traiter les cours non-appairés (divisés non-simultanés sans paire)
+  matchingResult.unmatched.forEach(course => {
+    const numGroups = course.numGroups;
+    const courseMinutes = course.duree * numGroups; // Séquentiel = × groupes
+    totalMinutes += courseMinutes;
+    unpairedMinutes += courseMinutes;
+
+    coursesProcessed++;
+    processedCourseIndices.add(course.originalIndex);
+
+    courseDetails.push({
       id: course.id,
       branche: course.branche,
       lecon: course.lecon,
       duree: course.duree,
       participants: course.participants,
       numGroups: numGroups,
-      executionType: executionType,
+      executionType: 'Séquentiel (non-appairé)',
       totalMinutes: courseMinutes,
       totalHours: (courseMinutes / 60).toFixed(2)
-    };
+    });
   });
 
+  // Calcul des heures
   const totalHours = (totalMinutes / 60).toFixed(1);
   
-  // Calcul des heures à dispo : 2 heures par semaine
-  // Semaines estimées = heures séquentielles / 40 (5 jours * 8h)
-  const sequentialHours = (divided2Minutes + divided3PlusMinutes) / 60;
-  const commonHours = commonMinutes / 60;
-  const estimatedWeeks = sequentialHours / 40;
-  const disposoHours = (estimatedWeeks * 2).toFixed(1);
+  // Heures à dispo : basées sur les heures non-appairées
+  // Minimum 2h par semaine si heures non-appairées > 0
+  let disposoHours = 0;
+  if (unpairedMinutes > 0) {
+    const estimatedWeeks = (unpairedMinutes / 60) / 40; // 40h par semaine
+    disposoHours = estimatedWeeks * 2;
+    if (disposoHours < 2) {
+      disposoHours = 2; // Minimum 2h
+    }
+  }
+  
+  disposoHours = disposoHours.toFixed(1);
   const totalWithDispo = (parseFloat(totalHours) + parseFloat(disposoHours)).toFixed(1);
 
   // Afficher le résumé
+  document.getElementById('coursesCount').textContent = coursesProcessed;
   document.getElementById('totalHours').textContent = totalHours;
   document.getElementById('disposoHours').textContent = disposoHours;
   document.getElementById('totalWithDispo').textContent = totalWithDispo;
@@ -126,6 +259,18 @@ async function calculateLoad() {
     `;
     tbody.appendChild(row);
   });
+
+  // Ajouter la ligne "À dispo des instructeurs" si besoin
+  if (parseFloat(disposoHours) > 0) {
+    const row = document.createElement('tr');
+    row.style.fontWeight = 'bold';
+    row.style.backgroundColor = '#fff3cd';
+    row.innerHTML = `
+      <td colspan="6">À dispo des instructeurs</td>
+      <td>${disposoHours}</td>
+    `;
+    tbody.appendChild(row);
+  }
 
   // Afficher les cartes
   document.getElementById('summaryCard').style.display = 'block';

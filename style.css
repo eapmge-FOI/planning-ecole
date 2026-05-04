@@ -1,51 +1,234 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: Arial;
-  margin: 40px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+  padding: 20px 0;
+}
+
+header h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+  font-size: 1.1em;
+  opacity: 0.9;
 }
 
 .card {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
   margin-bottom: 20px;
 }
 
-table {
-  border-collapse: collapse;
+.input-group label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 1.05em;
+}
+
+.input-group input {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 30px;
+  border-radius: 6px;
+  font-size: 1.05em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.summary-item .label {
+  font-size: 0.95em;
+  color: #666;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.summary-item .value {
+  font-size: 2em;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.summary-item .unit {
+  font-size: 0.85em;
+  color: #999;
+  margin-top: 4px;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-bar {
   width: 100%;
-}
-
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  vertical-align: top;
-}
-
-th {
-  background: #f4f4f4;
-}
-
-.status-weekend {
-  background: #efefef;
-}
-
-.status-holiday {
+  height: 30px;
   background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.status-vacation {
-  background: #e8e8e8;
+.bar-segment {
+  height: 100%;
+  transition: width 0.3s ease;
 }
 
-.status-stage {
-  background: #dbeafe;
+.bar-segment.common {
+  background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%);
 }
 
-.status-assermentation {
-  background: #fde68a;
+.bar-segment.divided-2 {
+  background: linear-gradient(90deg, #2196F3 0%, #42A5F5 100%);
 }
 
-.status-open {
-  background: #ffffff;
+.bar-segment.divided-3plus {
+  background: linear-gradient(90deg, #FF9800 0%, #FFB74D 100%);
+}
+
+.breakdown-item .label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95em;
+}
+
+.breakdown-item .value {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #667eea;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #667eea;
+}
+
+table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95em;
+}
+
+table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95em;
+}
+
+table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.8em;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  table {
+    font-size: 0.85em;
+  }
+
+  table th,
+  table td {
+    padding: 10px;
+  }
 }

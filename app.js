@@ -15,6 +15,16 @@ function calculateNumberOfGroups(course, nombreAspirants) {
   return Math.ceil(nombreAspirants / course.participants);
 }
 
+function getExecutionType(division, simultane) {
+  if (division === 'Non') {
+    return 'Commune';
+  }
+  if (simultane === 'Oui') {
+    return 'Simultané';
+  }
+  return 'Séquentiel';
+}
+
 function matchDividedCourses(courses, nombreAspirants) {
   // Séparer les cours divisés non-simultanés
   const dividedNonSimCourses = courses
@@ -36,13 +46,12 @@ function matchDividedCourses(courses, nombreAspirants) {
 
   // Matching : créer des paires
   const matched = new Set();
-  const pairs = []; // [ [cours1, cours2], [cours1, cours2], ... ]
-  const unmatched = []; // cours sans paire
+  const pairs = [];
+  const unmatched = [];
 
   Object.keys(durationGroups).forEach(duration => {
     const coursesOfSameDuration = durationGroups[duration];
     
-    // Créer des paires (cours1 avec cours2, cours3 avec cours4, etc.)
     for (let i = 0; i < coursesOfSameDuration.length - 1; i += 2) {
       const course1 = coursesOfSameDuration[i];
       const course2 = coursesOfSameDuration[i + 1];
@@ -52,7 +61,6 @@ function matchDividedCourses(courses, nombreAspirants) {
       matched.add(course2.originalIndex);
     }
 
-    // Si nombre impair, le dernier reste non-appairé
     if (coursesOfSameDuration.length % 2 === 1) {
       const lastCourse = coursesOfSameDuration[coursesOfSameDuration.length - 1];
       unmatched.push(lastCourse);
@@ -60,8 +68,8 @@ function matchDividedCourses(courses, nombreAspirants) {
   });
 
   return {
-    pairs,           // Cours appairés [[A, B], [C, D], ...]
-    unmatched,       // Cours non-appairés [E, F, ...]
+    pairs,
+    unmatched,
     matchedIndices: matched
   };
 }
@@ -77,7 +85,6 @@ async function calculateLoad() {
   const courses = await loadCourses();
   const school = await loadSchoolParams();
 
-  // Faire le matching
   const matchingResult = matchDividedCourses(courses, nombreAspirants);
 
   let totalMinutes = 0;
@@ -88,7 +95,6 @@ async function calculateLoad() {
   let coursesProcessed = 0;
 
   const courseDetails = [];
-  const processedCourseIndices = new Set();
 
   // 1. Traiter les cours non-divisés
   courses.forEach((course, index) => {
@@ -97,7 +103,6 @@ async function calculateLoad() {
       totalMinutes += courseMinutes;
       commonMinutes += courseMinutes;
       coursesProcessed++;
-      processedCourseIndices.add(index);
 
       courseDetails.push({
         id: course.id,
@@ -121,7 +126,6 @@ async function calculateLoad() {
       totalMinutes += courseMinutes;
       commonMinutes += courseMinutes;
       coursesProcessed++;
-      processedCourseIndices.add(index);
 
       courseDetails.push({
         id: course.id,
@@ -137,11 +141,9 @@ async function calculateLoad() {
     }
   });
 
-  // 3. Traiter les paires de cours (divisés non-simultanés appairés)
+  // 3. Traiter les paires de cours
   matchingResult.pairs.forEach(([course1, course2]) => {
-    const courseMinutes = course1.duree; // Même durée pour les deux
-    
-    // Compter les groupes pour déterminer la catégorie
+    const courseMinutes = course1.duree;
     const numGroups = course1.numGroups;
     totalMinutes += courseMinutes;
     
@@ -152,10 +154,7 @@ async function calculateLoad() {
     }
 
     coursesProcessed += 2;
-    processedCourseIndices.add(course1.originalIndex);
-    processedCourseIndices.add(course2.originalIndex);
 
-    // Ajouter les deux cours avec info de pairing
     courseDetails.push({
       id: course1.id,
       branche: course1.branche,
@@ -181,15 +180,14 @@ async function calculateLoad() {
     });
   });
 
-  // 4. Traiter les cours non-appairés (divisés non-simultanés sans paire)
+  // 4. Traiter les cours non-appairés
   matchingResult.unmatched.forEach(course => {
     const numGroups = course.numGroups;
-    const courseMinutes = course.duree * numGroups; // Séquentiel = × groupes
+    const courseMinutes = course.duree * numGroups;
     totalMinutes += courseMinutes;
     unpairedMinutes += courseMinutes;
 
     coursesProcessed++;
-    processedCourseIndices.add(course.originalIndex);
 
     courseDetails.push({
       id: course.id,
@@ -207,15 +205,14 @@ async function calculateLoad() {
   // Calcul des heures
   const totalHours = (totalMinutes / 60).toFixed(1);
   
-  // Heures à dispo : basées sur les heures non-appairées
-  // Minimum 2h par semaine si heures non-appairées > 0
-  let disposoHours = 0;
-  if (unpairedMinutes > 0) {
-    const estimatedWeeks = (unpairedMinutes / 60) / 40; // 40h par semaine
-    disposoHours = estimatedWeeks * 2;
-    if (disposoHours < 2) {
-      disposoHours = 2; // Minimum 2h
-    }
+  const estimatedWeeks = (unpairedMinutes / 60) / 40;
+  let disposoHours = estimatedWeeks * 2;
+  
+  if (unpairedMinutes > 0 && disposoHours < 2) {
+    disposoHours = 2;
+  }
+  if (unpairedMinutes === 0) {
+    disposoHours = 0;
   }
   
   disposoHours = disposoHours.toFixed(1);
@@ -236,7 +233,7 @@ async function calculateLoad() {
   document.getElementById('divided2Hours').textContent = divided2HoursFormatted + ' h';
   document.getElementById('divided3PlusHours').textContent = divided3PlusHoursFormatted + ' h';
 
-  // Calculer les widths des barres (proportionnelles)
+  // Calculer les widths des barres
   const maxHours = Math.max(commonMinutes, divided2Minutes, divided3PlusMinutes, 1);
   document.getElementById('commonBar').style.width = ((commonMinutes / maxHours) * 100) + '%';
   document.getElementById('divided2Bar').style.width = ((divided2Minutes / maxHours) * 100) + '%';

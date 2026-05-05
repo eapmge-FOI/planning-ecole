@@ -562,9 +562,9 @@ def generate_greedy_schedule(self, months: Optional[int] = None) -> SchedulingRe
             self._scheduled_by_id[candidate.session_id] = candidate
             scheduled_ids.add(candidate.session_id)
             parent_idx = next(
-                (idx for idx, c in enumerate(ordered_courses) if c.identifiant_cours == candidate.parent_course_id),
-                0,
-            )
+    (idx for idx, c in enumerate(ordered_courses) if c.identifiant_cours == candidate.parent_course_id),
+    course_cursor,
+)
             course_cursor = (parent_idx + 1) % max(len(ordered_courses), 1)
             weekly_key = f"{candidate.parent_course_id}:{week_key.year}-W{week_key.week}"
             sessions_by_week_course[weekly_key] = sessions_by_week_course.get(weekly_key, 0) + 1
@@ -623,7 +623,7 @@ def generate_greedy_schedule(self, months: Optional[int] = None) -> SchedulingRe
             ready.sort(key=lambda c: c.ordre_lecon)
 
         seen = {c.identifiant_cours for c in ordered}
-        tail = [c for c in sorted(self.courses, key=lambda x: x.ordre_lecon) if c.identifiant_cours not in seen]
+        tail = [x for x in sorted(self.courses, key=lambda x: x.ordre_lecon) if x.identifiant_cours not in seen]
         return ordered + tail
 
     def _iter_planning_days(self, start: date, end: date):
@@ -645,160 +645,160 @@ def generate_greedy_schedule(self, months: Optional[int] = None) -> SchedulingRe
             return True
         return False
 
-def _pick_next_schedulable_session(
-    self,
-    ordered_courses: List[CourseTemplate],
-    start_index: int,
-    current_day: date,
-    week_key: str,
-    sessions_by_course: Dict[str, List[GeneratedSession]],
-    scheduled_ids: Set[str],
-    sessions_by_week_course: Dict[str, int],
-    occupied_slots: Set[tuple[date, int, str]],
-    start_minute: int,
-    failure_reasons: Dict[str, Counter],  # NEW
-) -> Optional[ScheduledSession]:
-    if not ordered_courses:
-        return None
+	def _pick_next_schedulable_session(
+		self,
+		ordered_courses: List[CourseTemplate],
+		start_index: int,
+		current_day: date,
+		week_key: str,
+		sessions_by_course: Dict[str, List[GeneratedSession]],
+		scheduled_ids: Set[str],
+		sessions_by_week_course: Dict[str, int],
+		occupied_slots: Set[tuple[date, int, str]],
+		start_minute: int,
+		failure_reasons: Dict[str, Counter],  # NEW
+	) -> Optional[ScheduledSession]:
+		if not ordered_courses:
+			return None
 
-    for offset in range(len(ordered_courses)):
-        course = ordered_courses[(start_index + offset) % len(ordered_courses)]
-        pending = [s for s in sessions_by_course.get(course.identifiant_cours, []) if s.session_id not in scheduled_ids]
-        if not pending:
-            continue
+		for offset in range(len(ordered_courses)):
+			course = ordered_courses[(start_index + offset) % len(ordered_courses)]
+			pending = [s for s in sessions_by_course.get(course.identifiant_cours, []) if s.session_id not in scheduled_ids]
+			if not pending:
+				continue
 
-        for session in pending:
-            if not self._course_day_constraint_ok(course, current_day):
-                failure_reasons[session.session_id]["day_constraint"] += 1
-                continue
+			for session in pending:
+				if not self._course_day_constraint_ok(course, current_day):
+					failure_reasons[session.session_id]["day_constraint"] += 1
+					continue
 
-            if not self._course_weekly_constraint_ok(course, week_key, sessions_by_week_course):
-                failure_reasons[session.session_id]["weekly_limit"] += 1
-                continue
+				if not self._course_weekly_constraint_ok(course, week_key, sessions_by_week_course):
+					failure_reasons[session.session_id]["weekly_limit"] += 1
+					continue
 
-            dep_ok, dep_reason = self._course_dependencies_satisfied(
-                course=course,
-                session=session,
-                current_day=current_day,
-                scheduled_ids=scheduled_ids,
-                sessions_by_course=sessions_by_course,
-            )
-            if not dep_ok:
-                failure_reasons[session.session_id][dep_reason] += 1
-                continue
+				dep_ok, dep_reason = self._course_dependencies_satisfied(
+					course=course,
+					session=session,
+					current_day=current_day,
+					scheduled_ids=scheduled_ids,
+					sessions_by_course=sessions_by_course,
+				)
+				if not dep_ok:
+					failure_reasons[session.session_id][dep_reason] += 1
+					continue
 
-            if (current_day, start_minute, session.group_name) in occupied_slots:
-                failure_reasons[session.session_id]["slot_collision"] += 1
-                continue
+				if (current_day, start_minute, session.group_name) in occupied_slots:
+					failure_reasons[session.session_id]["slot_collision"] += 1
+					continue
 
-            return ScheduledSession(
-                session_id=session.session_id,
-                parent_course_id=session.parent_course_id,
-                lecon=self._course_map[session.parent_course_id].lecon,
-                group_name=session.group_name,
-                day=current_day,
-                start_minute=start_minute,
-                duration_minutes=session.duree_minutes,
-            )
+				return ScheduledSession(
+					session_id=session.session_id,
+					parent_course_id=session.parent_course_id,
+					lecon=self._course_map[session.parent_course_id].lecon,
+					group_name=session.group_name,
+					day=current_day,
+					start_minute=start_minute,
+					duration_minutes=session.duree_minutes,
+				)
 
-    return None
+		return None
 
-def _course_dependencies_satisfied(
-    self,
-    course: CourseTemplate,
-    session: GeneratedSession,
-    current_day: date,
-    scheduled_ids: Set[str],
-    sessions_by_course: Dict[str, List[GeneratedSession]],
-) -> tuple[bool, str]:
-    dependency_ids = course.apres_cours_id + course.doit_suivre_id
-    for prereq in dependency_ids:
-        if prereq not in sessions_by_course:
-            return False, "dependency_unknown"
+	def _course_dependencies_satisfied(
+		self,
+		course: CourseTemplate,
+		session: GeneratedSession,
+		current_day: date,
+		scheduled_ids: Set[str],
+		sessions_by_course: Dict[str, List[GeneratedSession]],
+	) -> tuple[bool, str]:
+		dependency_ids = course.apres_cours_id + course.doit_suivre_id
+		for prereq in dependency_ids:
+			if prereq not in sessions_by_course:
+				return False, "dependency_unknown"
 
-        prereq_sessions = sessions_by_course[prereq]
-        matched = self._find_matching_prereq_session(session, prereq_sessions, scheduled_ids)
-        if matched is None:
-            return False, "dependency_not_scheduled"
+			prereq_sessions = sessions_by_course[prereq]
+			matched = self._find_matching_prereq_session(session, prereq_sessions, scheduled_ids)
+			if matched is None:
+				return False, "dependency_not_scheduled"
 
-        prereq_course = self._course_map[prereq]
-        if not self._delay_constraint_ok(course, prereq_course, current_day, matched.day):
-            return False, "delay_window"
+			prereq_course = self._course_map[prereq]
+			if not self._delay_constraint_ok(course, prereq_course, current_day, matched.day):
+				return False, "delay_window"
 
-    return True, ""
+		return True, "ok"
 
-    def _find_matching_prereq_session(
-        self,
-        session: GeneratedSession,
-        prereq_sessions: List[GeneratedSession],
-        scheduled_ids: Set[str],
-    ) -> Optional[ScheduledSession]:
-        # Priority 1: same group link
-        same_group = [
-            s for s in prereq_sessions if s.group_name == session.group_name and s.session_id in scheduled_ids
-        ]
-        if same_group:
-            return self._scheduled_session_from_id(same_group[0].session_id)
+		def _find_matching_prereq_session(
+			self,
+			session: GeneratedSession,
+			prereq_sessions: List[GeneratedSession],
+			scheduled_ids: Set[str],
+		) -> Optional[ScheduledSession]:
+			# Priority 1: same group link
+			same_group = [
+				s for s in prereq_sessions if s.group_name == session.group_name and s.session_id in scheduled_ids
+			]
+			if same_group:
+				return self._scheduled_session_from_id(same_group[0].session_id)
 
-        # Priority 2: whole-class prerequisite
-        whole_class = [
-            s for s in prereq_sessions if s.group_name == "classe entière" and s.session_id in scheduled_ids
-        ]
-        if whole_class:
-            return self._scheduled_session_from_id(whole_class[0].session_id)
-        return None
+			# Priority 2: whole-class prerequisite
+			whole_class = [
+				s for s in prereq_sessions if s.group_name == "classe entière" and s.session_id in scheduled_ids
+			]
+			if whole_class:
+				return self._scheduled_session_from_id(whole_class[0].session_id)
+			return None
 
-    def _scheduled_session_from_id(self, session_id: str) -> Optional[ScheduledSession]:
-        # Lightweight lookup built from generated schedule output state.
-        # This method is overwritten on each schedule run by assigning `_scheduled_by_id`.
-        return getattr(self, "_scheduled_by_id", {}).get(session_id)
+		def _scheduled_session_from_id(self, session_id: str) -> Optional[ScheduledSession]:
+			# Lightweight lookup built from generated schedule output state.
+			# This method is overwritten on each schedule run by assigning `_scheduled_by_id`.
+			return getattr(self, "_scheduled_by_id", {}).get(session_id)
 
-    def _delay_constraint_ok(
-        self,
-        course: CourseTemplate,
-        prereq_course: CourseTemplate,
-        current_day: date,
-        prereq_day: date,
-    ) -> bool:
-        delta_days = (current_day - prereq_day).days
-        min_days = self._delay_to_days(course.delai_min_valeur, course.delai_min_unite)
-        max_days = self._delay_to_days(course.delai_max_valeur, course.delai_max_unite)
+		def _delay_constraint_ok(
+			self,
+			course: CourseTemplate,
+			prereq_course: CourseTemplate,
+			current_day: date,
+			prereq_day: date,
+		) -> bool:
+			delta_days = (current_day - prereq_day).days
+			min_days = self._delay_to_days(course.delai_min_valeur, course.delai_min_unite)
+			max_days = self._delay_to_days(course.delai_max_valeur, course.delai_max_unite)
 
-        # Stage debriefing must remain tightly coupled to its stage.
-        if "debriefing retour stage" in course.lecon.lower() and prereq_course.type == CourseType.STAGE:
-            max_days = 7 if max_days is None else min(max_days, 7)
+			# Stage debriefing must remain tightly coupled to its stage.
+			if "debriefing retour stage" in course.lecon.lower() and prereq_course.type == CourseType.STAGE:
+				max_days = 7 if max_days is None else min(max_days, 7)
 
-        if min_days is not None and delta_days < min_days:
-            return False
-        if max_days is not None and delta_days > max_days:
-            return False
-        return True
+			if min_days is not None and delta_days < min_days:
+				return False
+			if max_days is not None and delta_days > max_days:
+				return False
+			return True
 
-    def _delay_to_days(self, value: Optional[int], unit: Optional[DelayUnit]) -> Optional[int]:
-        if value is None or unit is None:
-            return None
-        if unit == DelayUnit.JOUR:
-            return value
-        if unit == DelayUnit.SEMAINE:
-            return value * 7
-        if unit == DelayUnit.MOIS:
-            return value * 30
-        return None
+		def _delay_to_days(self, value: Optional[int], unit: Optional[DelayUnit]) -> Optional[int]:
+			if value is None or unit is None:
+				return None
+			if unit == DelayUnit.JOUR:
+				return value
+			if unit == DelayUnit.SEMAINE:
+				return value * 7
+			if unit == DelayUnit.MOIS:
+				return value * 30
+			return None
 
-    def _course_day_constraint_ok(self, course: CourseTemplate, day: date) -> bool:
-        if not course.jour_specifique:
-            return True
-        target = self.DAY_NAME_TO_WEEKDAY.get(course.jour_specifique.lower())
-        if target is None:
-            return True
-        return day.weekday() == target
+		def _course_day_constraint_ok(self, course: CourseTemplate, day: date) -> bool:
+			if not course.jour_specifique:
+				return True
+			target = self.DAY_NAME_TO_WEEKDAY.get(course.jour_specifique.lower())
+			if target is None:
+				return True
+			return day.weekday() == target
 
-    def _course_weekly_constraint_ok(
-        self,
-        course: CourseTemplate,
-        week_key: str,
-        sessions_by_week_course: Dict[str, int],
-    ) -> bool:
+		def _course_weekly_constraint_ok(
+			self,
+			course: CourseTemplate,
+			week_key: str,
+			sessions_by_week_course: Dict[str, int],
+		) -> bool:
         if course.max_par_semaine is None:
             return True
         counter_key = f"{course.identifiant_cours}:{week_key}"

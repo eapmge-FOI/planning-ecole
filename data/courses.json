@@ -30,32 +30,12 @@
     "simultane": "Non"
   },
   {
-    "id": "A4",
-    "branche": "Circulation Routière",
-    "lecon": "Procédure AO4 - Analyse terrain",
-    "duree": 240,
-    "participants": 15,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
     "id": "A5",
     "branche": "Circulation Routière",
     "lecon": "Examen Procédure AO",
     "duree": 120,
     "participants": 40,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "A6",
-    "branche": "Circulation Routière",
-    "lecon": "FACILITE DE PARCAGE",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -127,16 +107,6 @@
     "participants": 40,
     "encadrants": 1,
     "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "A14",
-    "branche": "Circulation Routière",
-    "lecon": "MISE EN PLACE ET CONTROLE CIRCULATION (A REVOIR)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 8,
-    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -292,7 +262,7 @@
   {
     "id": "B15",
     "branche": "Circulation Routière",
-    "lecon": "EXAMEN DCR",
+    "lecon": "EXAMEN DCR ",
     "duree": 120,
     "participants": 40,
     "encadrants": 1,
@@ -412,7 +382,7 @@
   {
     "id": "B28",
     "branche": "Circulation Routière",
-    "lecon": "EXAMEN RAPPORT ACCIDENT",
+    "lecon": "EXAMEN RAPPORT ACCIDENT ",
     "duree": 240,
     "participants": 40,
     "encadrants": 1,
@@ -552,7 +522,7 @@
   {
     "id": "E4",
     "branche": "Compétences Psychosociales",
-    "lecon": "SPS L3 - GESTION DES EMOTIONS EN SITUATION",
+    "lecon": "SPS L3 - GESTION DES EMOTIONS EN SITUATION ",
     "duree": 240,
     "participants": 20,
     "encadrants": 1,
@@ -808,56 +778,6 @@
     "encadrants": 1,
     "division": "Oui",
     "simultane": "Oui"
-  },
-  {
-    "id": "F16",
-    "branche": "Français",
-    "lecon": "FRANCAIS L16",
-    "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
-    "id": "F17",
-    "branche": "Français",
-    "lecon": "FRANCAIS L17",
-    "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
-    "id": "F18",
-    "branche": "Français",
-    "lecon": "FRANCAIS L18",
-    "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
-    "id": "F19",
-    "branche": "Français",
-    "lecon": "FRANCAIS L19",
-    "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
-    "id": "F20",
-    "branche": "Français",
-    "lecon": "FRANCAIS L20",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
   },
   {
     "id": "G1",
@@ -1270,16 +1190,6 @@
     "simultane": "Non"
   },
   {
-    "id": "I20",
-    "branche": "Judiciaire",
-    "lecon": "ATELIER PRATIQUE 2 EXAMEN INTERMEDIAIRE",
-    "duree": 480,
-    "participants": 20,
-    "encadrants": 20,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
     "id": "I21",
     "branche": "Judiciaire",
     "lecon": "RAPPORT ARRESTATION (Exercice)",
@@ -1297,16 +1207,6 @@
     "participants": 40,
     "encadrants": 2,
     "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "I23",
-    "branche": "Judiciaire",
-    "lecon": "PERQUISITIONS (Exercice)",
-    "duree": 480,
-    "participants": 20,
-    "encadrants": 6,
-    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -1342,7 +1242,7 @@
   {
     "id": "I27",
     "branche": "Judiciaire",
-    "lecon": "RAPPORT DE DEGATS-DGT-REGIE-TAG",
+    "lecon": "RAPPORT DE DEGATS-DGT-REGIE-TAG ",
     "duree": 60,
     "participants": 40,
     "encadrants": 2,
@@ -1362,7 +1262,7 @@
   {
     "id": "I29",
     "branche": "Judiciaire",
-    "lecon": "ACTES METIER APM - TRIBUNAUX",
+    "lecon": "ACTES METIER APM - TRIBUNAUX ",
     "duree": 240,
     "participants": 40,
     "encadrants": 2,
@@ -1397,16 +1297,6 @@
     "participants": 20,
     "encadrants": 20,
     "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "J1",
-    "branche": "Législation",
-    "lecon": "APPLICATION SIL",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -1620,16 +1510,6 @@
     "simultane": "Non"
   },
   {
-    "id": "J23",
-    "branche": "Législation",
-    "lecon": "DROIT PENAL L4 (VISITE TRIBUNAL) / Organisé par le CFPS",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "J24",
     "branche": "Législation",
     "lecon": "EXAMEN LGD + LFORETS + RPRU",
@@ -1700,16 +1580,6 @@
     "simultane": "Oui"
   },
   {
-    "id": "J31",
-    "branche": "Législation",
-    "lecon": "LPR + LDPU L2 (Analyse terrain)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
     "id": "J32",
     "branche": "Législation",
     "lecon": "LRDBHD + LTGVEAT L1 (rapports)",
@@ -1750,16 +1620,6 @@
     "simultane": "Non"
   },
   {
-    "id": "J36",
-    "branche": "Législation",
-    "lecon": "ANALYSE TERRAIN LG - 1",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "J37",
     "branche": "Législation",
     "lecon": "PROCEDURE LG/CONTRA/AMENDE ADMIN L1",
@@ -1786,26 +1646,6 @@
     "duree": 120,
     "participants": 40,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "K1",
-    "branche": "Marche de service",
-    "lecon": "APOLLO - EXERCICE LONGUE DUREE - JOUR 1",
-    "duree": 480,
-    "participants": 40,
-    "encadrants": 12,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "K2",
-    "branche": "Marche de service",
-    "lecon": "APOLLO - EXERCICE LONGUE DUREE - JOUR 2 / SIS / CHIEN / BNAV",
-    "duree": 480,
-    "participants": 40,
-    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1893,16 +1733,6 @@
     "id": "M3",
     "branche": "Marche de service",
     "lecon": "MESURE GILET DE PROTECTION + TENUES DE GALA",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "M4",
-    "branche": "Marche de service",
-    "lecon": "FORMEL PREPA. ASSERMENTATION 1",
     "duree": 240,
     "participants": 40,
     "encadrants": 2,
@@ -2006,16 +1836,6 @@
     "duree": 120,
     "participants": 40,
     "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "N8",
-    "branche": "Marche de service",
-    "lecon": "ACTIVITES DE FIN D'ECOLE",
-    "duree": 480,
-    "participants": 40,
-    "encadrants": 1,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2180,16 +2000,6 @@
     "simultane": "Non"
   },
   {
-    "id": "P5",
-    "branche": "Police de Proximité",
-    "lecon": "(L8) VISUALISATION SUR LE TERRAIN VILLE DE GENEVE",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
-  },
-  {
     "id": "P6",
     "branche": "Police de Proximité",
     "lecon": "(L9) UMUS",
@@ -2238,26 +2048,6 @@
     "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
-  },
-  {
-    "id": "P11",
-    "branche": "Police de Proximité",
-    "lecon": "(L16) ABOUTISSEMENT A UNE RESOLUTION DE PROBLEME (GARE DES EAUX-VIVES)",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "P12",
-    "branche": "Police de Proximité",
-    "lecon": "(L17) VISUALISATION SUR LE TERRAIN COMMUNE ACG",
-    "duree": 480,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
   },
   {
     "id": "Q1",
@@ -2492,7 +2282,7 @@
   {
     "id": "R20",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOCO 9 GENERALE MAIN NUE",
+    "lecon": "FOCO 9 GENERALE MAIN NUE ",
     "duree": 240,
     "participants": 40,
     "encadrants": 6,
@@ -2910,16 +2700,6 @@
     "simultane": "Non"
   },
   {
-    "id": "S5",
-    "branche": "Sport",
-    "lecon": "MARCHE 15 KM",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "S6",
     "branche": "Sport",
     "lecon": "PREPARATION PHYSIQUE 2",
@@ -2972,7 +2752,7 @@
   {
     "id": "S11",
     "branche": "Sport",
-    "lecon": "PARCOURS A VELO 40 km",
+    "lecon": "PARCOURS A VELO 40 km ",
     "duree": 240,
     "participants": 20,
     "encadrants": 2,
@@ -3022,7 +2802,7 @@
   {
     "id": "S16",
     "branche": "Sport",
-    "lecon": "TEST COURSE INDIVIDUELLE 3",
+    "lecon": "TEST COURSE INDIVIDUELLE 3 ",
     "duree": 120,
     "participants": 40,
     "encadrants": 5,
@@ -3096,26 +2876,6 @@
     "duree": 120,
     "participants": 40,
     "encadrants": 3,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "S24",
-    "branche": "Sport",
-    "lecon": "Découverte BIKE POLICE",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 2,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "T1",
-    "branche": "Visites et informations",
-    "lecon": "MIND MAPPING / MEMORISATION / IA",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -3210,26 +2970,6 @@
     "simultane": "Non"
   },
   {
-    "id": "T11",
-    "branche": "Visites et informations",
-    "lecon": "GARDE DE L'ENVIRONNEMENT (Information)",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "T12",
-    "branche": "Visites et informations",
-    "lecon": "INSTRUCTION CIVIQUE 1 (Information)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "T13",
     "branche": "Visites et informations",
     "lecon": "BRIC (Information)",
@@ -3290,16 +3030,6 @@
     "simultane": "Non"
   },
   {
-    "id": "T20",
-    "branche": "Visites et informations",
-    "lecon": "IPA (Information)",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "T21",
     "branche": "Visites et informations",
     "lecon": "SENSIBILISATION VIOLENCE HOMOPHOBE (Information)",
@@ -3340,16 +3070,6 @@
     "simultane": "Non"
   },
   {
-    "id": "T25",
-    "branche": "Visites et informations",
-    "lecon": "DELEGATION à LA JEUNESSE/FASE (Information)",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "T26",
     "branche": "Visites et informations",
     "lecon": "LA BATTUE THEORIE (Information)",
@@ -3360,29 +3080,9 @@
     "simultane": "Non"
   },
   {
-    "id": "T27",
-    "branche": "Visites et informations",
-    "lecon": "LA BATTUE EXERCICE (Information)",
-    "duree": 180,
-    "participants": 20,
-    "encadrants": 2,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "T28",
     "branche": "Visites et informations",
     "lecon": "CELLULE DEBRIEFING POLICE/APM (Information)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "T29",
-    "branche": "Visites et informations",
-    "lecon": "ALZHEIMER (Information)",
     "duree": 120,
     "participants": 40,
     "encadrants": 1,
@@ -3400,16 +3100,6 @@
     "simultane": "Non"
   },
   {
-    "id": "T31",
-    "branche": "Visites et informations",
-    "lecon": "GPE (EX APEP) (Information)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "T32",
     "branche": "Visites et informations",
     "lecon": "EGALITE - DIVERSITE - INCLUSION (Information)",
@@ -3417,26 +3107,6 @@
     "participants": 20,
     "encadrants": 1,
     "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "T33",
-    "branche": "Visites et informations",
-    "lecon": "BSDA - DRONE (Information)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "T34",
-    "branche": "Visites et informations",
-    "lecon": "SPMG (Information)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -3480,16 +3150,6 @@
     "simultane": "Non"
   },
   {
-    "id": "U2",
-    "branche": "Visites et informations",
-    "lecon": "PRISON DE CHAMP-DOLLON (Visite)",
-    "duree": 240,
-    "participants": 19,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
     "id": "U3",
     "branche": "Visites et informations",
     "lecon": "NEDEX",
@@ -3497,16 +3157,6 @@
     "participants": 40,
     "encadrants": 3,
     "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "U4",
-    "branche": "Visites et informations",
-    "lecon": "SIS CASERNE (Visite)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -3527,26 +3177,6 @@
     "participants": 40,
     "encadrants": 1,
     "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "U9",
-    "branche": "Visites et informations",
-    "lecon": "SERVICE SOCIAL VILLE DE GENEVE (Information + visite PCI)",
-    "duree": 60,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "U10",
-    "branche": "Visites et informations",
-    "lecon": "OFFICE CANTONAL DES VEHICULES (Visite)",
-    "duree": 120,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
     "simultane": "Non"
   },
   {

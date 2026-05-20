@@ -135,16 +135,16 @@
     "lecon": "MISE EN PLACE ET CONTROLE CIRCULATION (A REVOIR)",
     "duree": 240,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 8,
     "division": "Oui",
-    "simultane": "Oui"
+    "simultane": "Non"
   },
   {
     "id": "B1",
     "branche": "Circulation Routière",
     "lecon": "REGULATION TRAFIC / Exercice et Examen",
     "duree": 240,
-    "participants": 15,
+    "participants": 20,
     "encadrants": 2,
     "division": "Oui",
     "simultane": "Non"
@@ -230,7 +230,7 @@
     "simultane": "Non"
   },
   {
-    "id": "B29",
+    "id": "B9",
     "branche": "Circulation Routière",
     "lecon": "DCR VI",
     "duree": 120,
@@ -292,7 +292,7 @@
   {
     "id": "B15",
     "branche": "Circulation Routière",
-    "lecon": "EXAMEN DCR",
+    "lecon": "EXAMEN DCR ",
     "duree": 120,
     "participants": 40,
     "encadrants": 1,
@@ -405,24 +405,14 @@
     "lecon": "EXERCICE ACCIDENT I",
     "duree": 480,
     "participants": 20,
-    "encadrants": 2,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "B27",
-    "branche": "Circulation Routière",
-    "lecon": "EXERCICE ACCIDENT II",
-    "duree": 480,
-    "participants": 20,
-    "encadrants": 2,
+    "encadrants": 8,
     "division": "Oui",
     "simultane": "Non"
   },
   {
     "id": "B28",
     "branche": "Circulation Routière",
-    "lecon": "EXAMEN RAPPORT ACCIDENT",
+    "lecon": "EXAMEN RAPPORT ACCIDENT ",
     "duree": 240,
     "participants": 40,
     "encadrants": 1,
@@ -534,9 +524,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L1 - INTRODUCTION",
     "duree": 60,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -547,26 +537,26 @@
     "participants": 20,
     "encadrants": 1,
     "division": "Oui",
-    "simultane": "Oui"
+    "simultane": "Non"
   },
   {
     "id": "E3",
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L2 - PERCEPTION ET INFLUENCES SOCIALES",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
     "id": "E4",
     "branche": "Compétences Psychosociales",
-    "lecon": "SPS L3 - GESTION DES EMOTIONS EN SITUATION",
+    "lecon": "SPS L3 - GESTION DES EMOTIONS EN SITUATION ",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -574,9 +564,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L4 - COMMUNICATION",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -584,9 +574,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L6 - STRESS QUOTIDIEN, CHRONIQUE ET PREVENTION",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -604,9 +594,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L7 - COCA I (avec comédien)",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -614,9 +604,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L8 - COCA II (avec comédien)",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -624,9 +614,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L9 - PRISE EN CHARGE D'UNE PERSONNE PERTURBEE PHYSIQUEMENT",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -634,9 +624,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L10 - INTELLIGENCE EMOTIONELLE + TOP 1",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -644,9 +634,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L11 - INTELLIGENCE EMOTIONELLE + TOP 2",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -654,9 +644,9 @@
     "branche": "Compétences Psychosociales",
     "lecon": "SPS L12 - INTELLIGENCE EMOTIONELLE + TOP 3",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -674,190 +664,190 @@
     "branche": "Français",
     "lecon": "FRANCAIS L1",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F2",
     "branche": "Français",
     "lecon": "FRANCAIS L2",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F3",
     "branche": "Français",
     "lecon": "FRANCAIS L3",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F4",
     "branche": "Français",
     "lecon": "FRANCAIS L4",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F5",
     "branche": "Français",
     "lecon": "FRANCAIS L5",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F6",
     "branche": "Français",
     "lecon": "FRANCAIS L6",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F7",
     "branche": "Français",
     "lecon": "FRANCAIS L7",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F8",
     "branche": "Français",
     "lecon": "FRANCAIS L8",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F9",
     "branche": "Français",
     "lecon": "FRANCAIS L9",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F10",
     "branche": "Français",
     "lecon": "FRANCAIS L10",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F11",
     "branche": "Français",
     "lecon": "FRANCAIS L11",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F12",
     "branche": "Français",
     "lecon": "FRANCAIS L12",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F13",
     "branche": "Français",
     "lecon": "FRANCAIS L13",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F14",
     "branche": "Français",
     "lecon": "FRANCAIS L14",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F15",
     "branche": "Français",
     "lecon": "FRANCAIS L15",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F16",
     "branche": "Français",
     "lecon": "FRANCAIS L16",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F17",
     "branche": "Français",
     "lecon": "FRANCAIS L17",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F18",
     "branche": "Français",
     "lecon": "FRANCAIS L18",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F19",
     "branche": "Français",
     "lecon": "FRANCAIS L19",
     "duree": 120,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "F20",
@@ -1352,7 +1342,7 @@
   {
     "id": "I27",
     "branche": "Judiciaire",
-    "lecon": "RAPPORT DE DEGATS-DGT-REGIE-TAG",
+    "lecon": "RAPPORT DE DEGATS-DGT-REGIE-TAG ",
     "duree": 60,
     "participants": 20,
     "encadrants": 1,
@@ -1372,7 +1362,7 @@
   {
     "id": "I29",
     "branche": "Judiciaire",
-    "lecon": "ACTES METIER APM - TRIBUNAUX",
+    "lecon": "ACTES METIER APM - TRIBUNAUX ",
     "duree": 240,
     "participants": 20,
     "encadrants": 1,
@@ -1634,9 +1624,9 @@
     "branche": "Législation",
     "lecon": "DROIT PENAL L4 (VISITE TRIBUNAL) / Organisé par le CFPS",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 2,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 1,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -1805,7 +1795,7 @@
     "lecon": "APOLLO - EXERCICE LONGUE DUREE - JOUR 1",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1815,7 +1805,7 @@
     "lecon": "APOLLO - EXERCICE LONGUE DUREE - JOUR 2 / SIS / CHIEN / BNAV",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1825,7 +1815,7 @@
     "lecon": "BALBOA - EXERCICE - JOUR 1 / DOJO + GYM 0600-2400",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1835,7 +1825,7 @@
     "lecon": "BALBOA - EXERCICE - JOUR 2 / DOJO + GYM 0600-2400",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1845,7 +1835,7 @@
     "lecon": "BALBOA - EXERCICE - JOUR 3 / DOJO + GYM 0600-2400",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 12,
     "division": "Non",
     "simultane": "Non"
   },
@@ -1854,9 +1844,9 @@
     "branche": "Marche de service",
     "lecon": "EVALUATIONS INDIVIDUELLES EEA 1",
     "duree": 480,
-    "participants": 40,
-    "encadrants": 8,
-    "division": "Non",
+    "participants": 20,
+    "encadrants": 4,
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -1864,9 +1854,9 @@
     "branche": "Marche de service",
     "lecon": "EVALUATIONS INDIVIDUELLES EEA 2",
     "duree": 480,
-    "participants": 40,
-    "encadrants": 8,
-    "division": "Non",
+    "participants": 20,
+    "encadrants": 4,
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -1874,9 +1864,9 @@
     "branche": "Marche de service",
     "lecon": "EVALUATIONS INDIVIDUELLES EEA 4",
     "duree": 480,
-    "participants": 40,
-    "encadrants": 8,
-    "division": "Non",
+    "participants": 20,
+    "encadrants": 4,
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -1940,12 +1930,12 @@
     "simultane": "Non"
   },
   {
-    "id": "AS1",
+    "id": "M7",
     "branche": "Marche de service",
     "lecon": "ASSERMENTATION",
     "duree": 480,
     "participants": 40,
-    "encadrants": 6,
+    "encadrants": 8,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2005,7 +1995,7 @@
     "lecon": "Stage",
     "duree": 4800,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2022,10 +2012,10 @@
   {
     "id": "N8",
     "branche": "Marche de service",
-    "lecon": "ACTIVITES DE FIN D'ECOLE",
+    "lecon": "ACTIVITES DE FIN D'ECOLE ",
     "duree": 480,
     "participants": 40,
-    "encadrants": 8,
+    "encadrants": 1,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2055,7 +2045,7 @@
     "lecon": "(L3) LES FONDEMENTS",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2065,7 +2055,7 @@
     "lecon": "(L4) PARTENARIATS ET COMPETENCES",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2075,7 +2065,7 @@
     "lecon": "(L5) PREVENTION ET REPRESSION",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2085,7 +2075,7 @@
     "lecon": "(L7) EXAMEN EVALUATION POLICE PROXIMITE 1",
     "duree": 60,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2095,7 +2085,7 @@
     "lecon": "(L10) PROCESSUS DE RESOLUTION DE PROBLEME SARA",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2105,7 +2095,7 @@
     "lecon": "(L15) COMPETENCES INTERCULTURELLES",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2115,7 +2105,7 @@
     "lecon": "(L18) RESOLUTION DE PROBLEME SARA I",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2125,7 +2115,7 @@
     "lecon": "(L19) RESOLUTION DE PROBLEME SARA II",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2135,17 +2125,7 @@
     "lecon": "(L24) EXAMEN EVALUATION POLICE PROXIMITE 2",
     "duree": 60,
     "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
-  },
-  {
-    "id": "O10",
-    "branche": "Police de Proximité",
-    "lecon": "(L21) RESOLUTION DE PROBLEME SARA III",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2153,10 +2133,10 @@
     "id": "O11",
     "branche": "Police de Proximité",
     "lecon": "L23 RETOUR DOSSIER SARA",
-    "duree": 240,
-    "participants": 40,
-    "encadrants": 1,
-    "division": "Non",
+    "duree": 480,
+    "participants": 20,
+    "encadrants": 9,
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -2165,7 +2145,7 @@
     "lecon": "(L0) POLICE DE PROXIMITE (Information)",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2175,7 +2155,7 @@
     "lecon": "(L1) REFLEXION POLPROX",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2185,7 +2165,7 @@
     "lecon": "(L2) PRESENTATION REFLEXION POLPROX",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2195,7 +2175,7 @@
     "lecon": "(L6) PARTENAIRES / OUTILS",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2204,10 +2184,10 @@
     "branche": "Police de Proximité",
     "lecon": "(L8) VISUALISATION SUR LE TERRAIN VILLE DE GENEVE",
     "duree": 240,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "P6",
@@ -2215,7 +2195,7 @@
     "lecon": "(L9) UMUS",
     "duree": 60,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2225,7 +2205,7 @@
     "lecon": "(L11) SEANCE DE QUARTIER",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2235,7 +2215,7 @@
     "lecon": "(L12) POL PROX - LE RENSEIGNEMENT",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2245,7 +2225,7 @@
     "lecon": "(L13) POL PROX - LA SANCTION",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2255,7 +2235,7 @@
     "lecon": "(L14) POL PROX - LES CAS HORS COMPETENCES",
     "duree": 120,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2265,7 +2245,7 @@
     "lecon": "(L16) ABOUTISSEMENT A UNE RESOLUTION DE PROBLEME (GARE DES EAUX-VIVES)",
     "duree": 240,
     "participants": 40,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2274,10 +2254,10 @@
     "branche": "Police de Proximité",
     "lecon": "(L17) VISUALISATION SUR LE TERRAIN COMMUNE ACG",
     "duree": 480,
-    "participants": 40,
+    "participants": 20,
     "encadrants": 1,
-    "division": "Non",
-    "simultane": "Non"
+    "division": "Oui",
+    "simultane": "Oui"
   },
   {
     "id": "Q1",
@@ -2324,8 +2304,8 @@
     "branche": "Sécurité Personnelle",
     "lecon": "Présentation / Force & trauma",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
+    "participants": 40,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2344,9 +2324,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 1",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2364,9 +2344,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 2",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2384,9 +2364,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 3",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2404,9 +2384,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 4",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2414,8 +2394,8 @@
     "branche": "Sécurité Personnelle",
     "lecon": "LE CONTRÔLE DE PERSONNES (THEORIE)",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
+    "participants": 40,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2427,7 +2407,7 @@
     "participants": 20,
     "encadrants": 4,
     "division": "Oui",
-    "simultane": "Non"
+    "simultane": "Oui"
   },
   {
     "id": "R12",
@@ -2444,9 +2424,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 5",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2464,9 +2444,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 6",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2484,9 +2464,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 7",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2504,19 +2484,19 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 8",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
     "id": "R20",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOCO 9 GENERALE MAIN NUE",
+    "lecon": "FOCO 9 GENERALE MAIN NUE ",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2525,18 +2505,18 @@
     "lecon": "EXAMEN MAIN NUES",
     "duree": 240,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 6,
     "division": "Oui",
-    "simultane": "Oui"
+    "simultane": "Non"
   },
   {
     "id": "R22",
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION MAIN NUES 1",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2544,9 +2524,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION MAIN NUES 2",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2555,8 +2535,8 @@
     "lecon": "MISE EN SITUATION 1 : analyses de cas vidéos",
     "duree": 240,
     "participants": 20,
-    "encadrants": 2,
-    "division": "Non",
+    "encadrants": 4,
+    "division": "Oui",
     "simultane": "Non"
   },
   {
@@ -2574,9 +2554,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 10",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2594,9 +2574,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 11",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2614,9 +2594,9 @@
     "branche": "Sécurité Personnelle",
     "lecon": "FOCO 12",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2625,18 +2605,18 @@
     "lecon": "EXAMEN BT",
     "duree": 240,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 6,
     "division": "Oui",
-    "simultane": "Oui"
+    "simultane": "Non"
   },
   {
     "id": "R32",
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION BT 1",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -2644,63 +2624,83 @@
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION BT 2",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
     "id": "R34",
     "branche": "Sécurité Personnelle",
-    "lecon": "THEORIE USAFOR et MISE EN PRATIQUE",
+    "lecon": "PRATIQUE USAFOR",
     "duree": 240,
     "participants": 20,
+    "encadrants": 4,
+    "division": "Oui",
+    "simultane": "Oui"
+  },
+  {
+    "id": "R35",
+    "branche": "Sécurité Personnelle",
+    "lecon": "FOUILLE CORPORELLE THEORIE",
+    "duree": 120,
+    "participants": 40,
     "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
   {
-    "id": "R35",
-    "branche": "Sécurité Personnelle",
-    "lecon": "FOUILLE CORPORELLE (Théorie + Pratique)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
     "id": "R36",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOUILLE CORPORELLE - POSTE ACACIAS",
-    "duree": 240,
+    "lecon": "FOUILLE CORPORELLE PRATIQUE",
+    "duree": 120,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 3,
     "division": "Oui",
     "simultane": "Oui"
   },
   {
     "id": "R37",
     "branche": "Sécurité Personnelle",
-    "lecon": "SPRAY OC",
+    "lecon": "FOUILLE CORPORELLE - POSTE APM",
     "duree": 240,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 3,
     "division": "Oui",
     "simultane": "Oui"
   },
   {
     "id": "R38",
     "branche": "Sécurité Personnelle",
-    "lecon": "CONTRÔLE DE VEHICULES - THEORIE",
-    "duree": 240,
-    "participants": 20,
+    "lecon": "SPRAY OC THEORIE",
+    "duree": 60,
+    "participants": 40,
     "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
   {
     "id": "R39",
+    "branche": "Sécurité Personnelle",
+    "lecon": "SPRAY OC PRATIQUE",
+    "duree": 180,
+    "participants": 20,
+    "encadrants": 3,
+    "division": "Oui",
+    "simultane": "Oui"
+  },
+  {
+    "id": "R40",
+    "branche": "Sécurité Personnelle",
+    "lecon": "CONTRÔLE DE VEHICULES - THEORIE",
+    "duree": 60,
+    "participants": 40,
+    "encadrants": 2,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R41",
     "branche": "Sécurité Personnelle",
     "lecon": "CONTRÔLE DE VEHICULES -- PRATIQUE",
     "duree": 480,
@@ -2710,57 +2710,77 @@
     "simultane": "Non"
   },
   {
-    "id": "R40",
-    "branche": "Sécurité Personnelle",
-    "lecon": "TACTIQUE - Travail au cadre et basse luminosité",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "R41",
-    "branche": "Sécurité Personnelle",
-    "lecon": "ARMES BLANCHES 1 (DOC)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
     "id": "R42",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOCO 13 - GENERALE RUE",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "lecon": "TACTIQUE - Travail au cadre et basse luminosité - THEORIE",
+    "duree": 60,
+    "participants": 40,
+    "encadrants": 2,
+    "division": "Non",
     "simultane": "Non"
   },
   {
     "id": "R43",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOCO 14 - GENERALE RUE",
-    "duree": 120,
+    "lecon": "TACTIQUE - Travail au cadre et basse luminosité - PRATIQUE",
+    "duree": 180,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 3,
     "division": "Oui",
-    "simultane": "Non"
+    "simultane": "Oui"
   },
   {
     "id": "R44",
     "branche": "Sécurité Personnelle",
-    "lecon": "FOCO 15 - GENERALE RUE",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "lecon": "ARMES BLANCHES - THEORIE",
+    "duree": 60,
+    "participants": 40,
+    "encadrants": 2,
+    "division": "Non",
     "simultane": "Non"
   },
   {
     "id": "R45",
+    "branche": "Sécurité Personnelle",
+    "lecon": "ARMES BLANCHES - PRATIQUE",
+    "duree": 180,
+    "participants": 20,
+    "encadrants": 3,
+    "division": "Oui",
+    "simultane": "Non"
+  },
+  {
+    "id": "R46",
+    "branche": "Sécurité Personnelle",
+    "lecon": "FOCO 13 - GENERALE RUE",
+    "duree": 240,
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R47",
+    "branche": "Sécurité Personnelle",
+    "lecon": "FOCO 14 - GENERALE RUE",
+    "duree": 120,
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R48",
+    "branche": "Sécurité Personnelle",
+    "lecon": "FOCO 15 - GENERALE RUE",
+    "duree": 240,
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R49",
     "branche": "Sécurité Personnelle",
     "lecon": "EXAMEN THEORIQUE",
     "duree": 120,
@@ -2770,57 +2790,57 @@
     "simultane": "Non"
   },
   {
-    "id": "R46",
+    "id": "R50",
     "branche": "Sécurité Personnelle",
     "lecon": "Drill Mise en Situation / REMEDIATION 1 - EXAMEN THEORIQUE TTI",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "R47",
-    "branche": "Sécurité Personnelle",
-    "lecon": "REMEDIATION 2 - EXAMEN THEORIQUE TTI",
-    "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "R48",
-    "branche": "Sécurité Personnelle",
-    "lecon": "EXAMEN RUE / ATELIER PRATIQUE 4",
-    "duree": 480,
     "participants": 40,
-    "encadrants": 8,
+    "encadrants": 6,
     "division": "Non",
     "simultane": "Non"
   },
   {
-    "id": "R49",
+    "id": "R51",
+    "branche": "Sécurité Personnelle",
+    "lecon": "REMEDIATION 2 - EXAMEN THEORIQUE TTI",
+    "duree": 120,
+    "participants": 40,
+    "encadrants": 1,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R52",
+    "branche": "Sécurité Personnelle",
+    "lecon": "EXAMEN RUE / ATELIER PRATIQUE 4",
+    "duree": 480,
+    "participants": 40,
+    "encadrants": 20,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "R53",
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION 1 - EXAMEN RUE",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
-    "id": "R50",
+    "id": "R54",
     "branche": "Sécurité Personnelle",
     "lecon": "REMEDIATION 2 - EXAMEN RUE",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 4,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 6,
+    "division": "Non",
     "simultane": "Non"
   },
   {
-    "id": "R51",
+    "id": "R55",
     "branche": "Sécurité Personnelle",
     "lecon": "SENSIBILISATION armes à feu et ballistique - BDB",
     "duree": 240,
@@ -2830,22 +2850,32 @@
     "simultane": "Non"
   },
   {
-    "id": "R52",
+    "id": "R56",
     "branche": "Sécurité Personnelle",
     "lecon": "CONFRONTATION DE LA MATIERE (mise en application concrète)",
     "duree": 120,
     "participants": 20,
-    "encadrants": 4,
+    "encadrants": 6,
     "division": "Oui",
     "simultane": "Non"
   },
   {
-    "id": "S25",
+    "id": "R57",
+    "branche": "Sécurité Personnelle",
+    "lecon": "BOITE A OUTILS",
+    "duree": 180,
+    "participants": 40,
+    "encadrants": 2,
+    "division": "Non",
+    "simultane": "Non"
+  },
+  {
+    "id": "S1",
     "branche": "Sport",
     "lecon": "COURSE INDIVIDUELLE 1 (reconnaissance)",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
+    "participants": 40,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2855,7 +2885,7 @@
     "lecon": "PREPARATION PHYSIQUE EN EXTERIEUR 1",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2864,28 +2894,28 @@
     "branche": "Sport",
     "lecon": "TPA 1 FORMATIF",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S4",
     "branche": "Sport",
     "lecon": "COOPER 1 (y compris Briefing)",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 3,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S5",
     "branche": "Sport",
     "lecon": "MARCHE 15 KM",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
+    "participants": 40,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -2895,7 +2925,7 @@
     "lecon": "PREPARATION PHYSIQUE 2",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2905,7 +2935,7 @@
     "lecon": "PREPARATION PHYSIQUE 3",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2915,7 +2945,7 @@
     "lecon": "PREPARATION PHYSIQUE 4",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2924,28 +2954,28 @@
     "branche": "Sport",
     "lecon": "TEST COURSE INDIVIDUELLE 2",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S10",
     "branche": "Sport",
     "lecon": "TPA 2",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S11",
     "branche": "Sport",
-    "lecon": "PARCOURS A VELO 40 km",
+    "lecon": "PARCOURS A VELO 40 km ",
     "duree": 240,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2954,10 +2984,10 @@
     "branche": "Sport",
     "lecon": "TEST COOPER 2",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 3,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S13",
@@ -2965,7 +2995,7 @@
     "lecon": "PREPARATION PHYSIQUE 5",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2975,7 +3005,7 @@
     "lecon": "PREPARATION PHYSIQUE 6",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -2984,30 +3014,30 @@
     "branche": "Sport",
     "lecon": "TPA 3",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S16",
     "branche": "Sport",
-    "lecon": "TEST COURSE INDIVIDUELLE 3",
+    "lecon": "TEST COURSE INDIVIDUELLE 3 ",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S17",
     "branche": "Sport",
     "lecon": "TEST COOPER 3",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 3,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S18",
@@ -3015,7 +3045,7 @@
     "lecon": "PREPARATION PHYSIQUE 7",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -3024,8 +3054,8 @@
     "branche": "Sport",
     "lecon": "MARCHE 30 KM",
     "duree": 480,
-    "participants": 20,
-    "encadrants": 1,
+    "participants": 40,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -3034,20 +3064,20 @@
     "branche": "Sport",
     "lecon": "TEST COURSE INDIVIDUELLE 4",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S21",
     "branche": "Sport",
     "lecon": "TPA 4",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 5,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S22",
@@ -3055,7 +3085,7 @@
     "lecon": "PREPARATION PHYSIQUE 8",
     "duree": 120,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Oui"
   },
@@ -3064,10 +3094,10 @@
     "branche": "Sport",
     "lecon": "TEST COOPER 4",
     "duree": 120,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 3,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "S24",
@@ -3075,7 +3105,7 @@
     "lecon": "Découverte BIKE POLICE",
     "duree": 240,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Oui",
     "simultane": "Non"
   },
@@ -3325,7 +3355,7 @@
     "lecon": "LA BATTUE THEORIE (Information)",
     "duree": 60,
     "participants": 20,
-    "encadrants": 1,
+    "encadrants": 2,
     "division": "Non",
     "simultane": "Non"
   },
@@ -3335,9 +3365,9 @@
     "lecon": "LA BATTUE EXERCICE (Information)",
     "duree": 180,
     "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "encadrants": 2,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "T28",
@@ -3387,7 +3417,7 @@
     "participants": 20,
     "encadrants": 1,
     "division": "Oui",
-    "simultane": "Oui"
+    "simultane": "Non"
   },
   {
     "id": "T33",
@@ -3434,9 +3464,9 @@
     "branche": "Visites et informations",
     "lecon": "QUAI 9",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 1,
-    "division": "Oui",
+    "participants": 40,
+    "encadrants": 2,
+    "division": "Non",
     "simultane": "Non"
   },
   {
@@ -3464,25 +3494,15 @@
     "branche": "Visites et informations",
     "lecon": "NEDEX",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 2,
-    "division": "Oui",
-    "simultane": "Oui"
+    "participants": 40,
+    "encadrants": 3,
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "U4",
     "branche": "Visites et informations",
     "lecon": "SIS CASERNE (Visite)",
-    "duree": 240,
-    "participants": 20,
-    "encadrants": 2,
-    "division": "Oui",
-    "simultane": "Non"
-  },
-  {
-    "id": "U5",
-    "branche": "Visites et informations",
-    "lecon": "HISTOIRE ET INSTITUTIONS DE GENEVE (Information au CFPS puis Visite)",
     "duree": 240,
     "participants": 20,
     "encadrants": 1,
@@ -3504,8 +3524,8 @@
     "branche": "Visites et informations",
     "lecon": "OFDF (Visite) Le contacter une semaine avant.",
     "duree": 240,
-    "participants": 20,
-    "encadrants": 2,
+    "participants": 40,
+    "encadrants": 1,
     "division": "Oui",
     "simultane": "Non"
   },
@@ -3514,10 +3534,10 @@
     "branche": "Visites et informations",
     "lecon": "SERVICE SOCIAL VILLE DE GENEVE (Information + visite PCI)",
     "duree": 60,
-    "participants": 20,
+    "participants": 40,
     "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "division": "Non",
+    "simultane": "Non"
   },
   {
     "id": "U10",
@@ -3544,9 +3564,9 @@
     "branche": "Visites et informations",
     "lecon": "SCAV (Information au CFPS puis Visite)",
     "duree": 240,
-    "participants": 20,
+    "participants": 40,
     "encadrants": 1,
-    "division": "Oui",
-    "simultane": "Oui"
+    "division": "Non",
+    "simultane": "Non"
   }
 ]

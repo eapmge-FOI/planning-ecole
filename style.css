@@ -99,7 +99,7 @@ header h1 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
 }
 
@@ -185,6 +185,15 @@ header h1 {
   color: #667eea;
 }
 
+.breakdown-item .count {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.subsection-title {
+  margin-top: 35px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -216,6 +225,13 @@ table tbody tr:hover {
 
 table tbody tr:nth-child(even) {
   background: #fafbfc;
+}
+
+.category-row td,
+.total-row td {
+  background: #eef2ff;
+  color: #333;
+  font-weight: 700;
 }
 
 @media (max-width: 768px) {

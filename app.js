@@ -35,11 +35,132 @@ function createCategory(label) {
     courses: [],
     minutes: 0,
     dispoMinutes: 0,
+    dispoReasons: [],
     rotationGroups: [],
   };
 }
 
-function computeSequentialCategory(category) {
+function addDispoReason(category, minutes, reason) {
+  category.dispoReasons.push({ minutes, reason });
+}
+
+function findBestHalfPartition(courses) {
+  const totalMinutes = courses.reduce((sum, course) => sum + course.duree, 0);
+  const target = Math.floor(totalMinutes / 2);
+  const reachable = new Map([[0, null]]);
+
+  courses.forEach((course, index) => {
+    Array.from(reachable.keys())
+      .sort((a, b) => b - a)
+      .forEach((sum) => {
+        const nextSum = sum + course.duree;
+        if (nextSum <= target && !reachable.has(nextSum)) {
+          reachable.set(nextSum, { previous: sum, index });
+        }
+      });
+  });
+
+  const bestSum = Math.max(...reachable.keys());
+  const selectedIndexes = new Set();
+  let cursor = bestSum;
+
+  while (cursor > 0) {
+    const parent = reachable.get(cursor);
+    selectedIndexes.add(parent.index);
+    cursor = parent.previous;
+  }
+
+  const firstTrack = [];
+  const secondTrack = [];
+
+  courses.forEach((course, index) => {
+    if (selectedIndexes.has(index)) {
+      firstTrack.push(course);
+    } else {
+      secondTrack.push(course);
+    }
+  });
+
+  return {
+    firstTrack,
+    secondTrack,
+    firstTrackMinutes: bestSum,
+    secondTrackMinutes: totalMinutes - bestSum,
+    missingMinutes: totalMinutes - (2 * bestSum),
+    totalMinutes,
+  };
+}
+
+function computeSequential2Category(category) {
+  const exerciseCourses = category.courses.filter((detail) => detail.duree > 240);
+  const shortCourses = category.courses.filter((detail) => detail.duree <= 240);
+
+  exerciseCourses.forEach((detail) => {
+    category.minutes += detail.duree;
+    category.dispoMinutes += detail.duree;
+    detail.rotation = `Exercice >240 min - ${formatHours(detail.duree)} h à dispo en parallèle`;
+    category.rotationGroups.push({
+      label: detail.lecon,
+      numGroups: 2,
+      duration: detail.duree,
+      courseCount: 1,
+      missingLabel: `${formatHours(detail.duree)} h`,
+      grossMinutes: detail.duree,
+      dispoMinutes: detail.duree,
+      reason: 'Exercice de plus de 240 min: l’autre classe est à dispo en parallèle.',
+    });
+  });
+
+  const exerciseDispoMinutes = exerciseCourses.reduce((sum, detail) => sum + detail.duree, 0);
+  if (exerciseCourses.length > 0) {
+    addDispoReason(
+      category,
+      exerciseDispoMinutes,
+      `${exerciseCourses.length} exercice(s) >240 min: ajout de la même durée à dispo en parallèle.`,
+    );
+  }
+
+  if (shortCourses.length === 0) {
+    if (category.dispoReasons.length === 0) {
+      addDispoReason(category, 0, 'Aucun cours dans cette catégorie.');
+    }
+    return;
+  }
+
+  const partition = findBestHalfPartition(shortCourses);
+  category.minutes += partition.totalMinutes;
+  category.dispoMinutes += partition.missingMinutes;
+
+  partition.firstTrack.forEach((detail) => {
+    detail.rotation = `Cours courts <=240 min - piste A (${formatHours(partition.firstTrackMinutes)} h)`;
+  });
+  partition.secondTrack.forEach((detail) => {
+    detail.rotation = `Cours courts <=240 min - piste B (${formatHours(partition.secondTrackMinutes)} h)`;
+  });
+
+  category.rotationGroups.push({
+    label: 'Cours courts <=240 min',
+    numGroups: 2,
+    duration: 'mixte',
+    courseCount: shortCourses.length,
+    missingLabel: `${formatHours(partition.missingMinutes)} h`,
+    grossMinutes: partition.totalMinutes,
+    dispoMinutes: partition.missingMinutes,
+    reason: partition.missingMinutes > 0
+      ? `Il manque ${formatHours(partition.missingMinutes)} h pour équilibrer les deux pistes de cours.`
+      : 'Les deux pistes de cours courts sont équilibrées.',
+  });
+
+  addDispoReason(
+    category,
+    partition.missingMinutes,
+    partition.missingMinutes > 0
+      ? `Cours <=240 min: compensation incomplète, il manque ${formatHours(partition.missingMinutes)} h d'équivalent.`
+      : 'Cours <=240 min: les durées se compensent entre les deux classes.',
+  );
+}
+
+function computeSequential3PlusCategory(category) {
   const buckets = new Map();
 
   category.courses.forEach((detail) => {
@@ -56,9 +177,10 @@ function computeSequentialCategory(category) {
 
   buckets.forEach((bucket) => {
     const courseCount = bucket.courses.length;
-    const rotationSlots = Math.max(courseCount, bucket.numGroups);
-    const minutes = rotationSlots * bucket.duration;
-    const dispoMinutes = Math.max(0, bucket.numGroups - courseCount) * bucket.duration;
+    const remainder = courseCount % bucket.numGroups;
+    const missingSlots = remainder === 0 ? 0 : bucket.numGroups - remainder;
+    const minutes = courseCount * bucket.duration;
+    const dispoMinutes = missingSlots * bucket.duration;
 
     category.minutes += minutes;
     category.dispoMinutes += dispoMinutes;
@@ -66,16 +188,33 @@ function computeSequentialCategory(category) {
     const rotationLabel = `${bucket.duration} min - ${courseCount} cours / ${bucket.numGroups} classes`;
     category.rotationGroups.push({
       ...bucket,
-      rotationSlots,
+      courseCount,
+      missingSlots,
+      missingLabel: `${missingSlots} créneau(x)`,
       minutes,
       dispoMinutes,
       label: rotationLabel,
+      reason: dispoMinutes > 0
+        ? `Rotation incomplète: ${missingSlots} classe(s) sans cours équivalent.`
+        : 'Rotation complète: chaque classe a un cours équivalent.',
     });
 
     bucket.courses.forEach((detail) => {
       detail.rotation = rotationLabel;
     });
+
+    addDispoReason(
+      category,
+      dispoMinutes,
+      dispoMinutes > 0
+        ? `${rotationLabel}: ${missingSlots} classe(s) à dispo faute de cours équivalent.`
+        : `${rotationLabel}: aucune heure à dispo ajoutée.`,
+    );
   });
+
+  if (category.dispoReasons.length === 0) {
+    addDispoReason(category, 0, 'Aucun cours dans cette catégorie.');
+  }
 }
 
 function courseSortValue(detail) {
@@ -138,8 +277,8 @@ async function calculateLoad() {
     }
   });
 
-  computeSequentialCategory(categories.sequential2);
-  computeSequentialCategory(categories.sequential3Plus);
+  computeSequential2Category(categories.sequential2);
+  computeSequential3PlusCategory(categories.sequential3Plus);
 
   const totalMinutes = Object.values(categories)
     .reduce((sum, category) => sum + category.minutes, 0);
@@ -149,6 +288,17 @@ async function calculateLoad() {
   const weeklyInstructorDispoMinutes = baseWeeks * 120;
   const instructorDispoMinutes = rotationDispoMinutes + weeklyInstructorDispoMinutes;
   const totalWithDispo = totalMinutes + instructorDispoMinutes;
+
+  addDispoReason(
+    categories.common,
+    0,
+    'Cours communs: aucune heure à dispo ajoutée, toute la classe suit le cours ensemble.',
+  );
+  addDispoReason(
+    categories.simultaneous,
+    0,
+    'Cours divisés simultanément: aucune heure à dispo ajoutée, les groupes travaillent en parallèle.',
+  );
 
   // Résumé
   document.getElementById('coursesCount').textContent = courses.length;
@@ -218,6 +368,15 @@ function renderCourseDetails(categories) {
         `;
         tbody.appendChild(row);
       });
+
+    category.dispoReasons.forEach((item) => {
+      const reasonRow = document.createElement('tr');
+      reasonRow.className = 'reason-row';
+      reasonRow.innerHTML = `
+        <td colspan="8">À dispo ajoutée: ${formatHours(item.minutes)} h - ${item.reason}</td>
+      `;
+      tbody.appendChild(reasonRow);
+    });
   });
 }
 
@@ -232,15 +391,23 @@ function renderRotationDetails(categories, rotationDispoMinutes, weeklyInstructo
 
   rotationGroups.forEach((group) => {
     const row = document.createElement('tr');
+    const durationLabel = typeof group.duration === 'number' ? `${group.duration} min` : group.duration;
     row.innerHTML = `
       <td>${group.numGroups} classes</td>
-      <td>${group.duration} min</td>
-      <td>${group.courses.length}</td>
-      <td>${group.rotationSlots}</td>
-      <td>${formatHours(group.minutes)}</td>
+      <td>${durationLabel}</td>
+      <td>${group.courseCount ?? group.courses.length}</td>
+      <td>${group.missingLabel ?? '-'}</td>
+      <td>${formatHours(group.grossMinutes ?? group.minutes)}</td>
       <td>${formatHours(group.dispoMinutes)}</td>
     `;
     tbody.appendChild(row);
+
+    const reasonRow = document.createElement('tr');
+    reasonRow.className = 'reason-row';
+    reasonRow.innerHTML = `
+      <td colspan="6">${group.reason}</td>
+    `;
+    tbody.appendChild(reasonRow);
   });
 
   const rotationRow = document.createElement('tr');

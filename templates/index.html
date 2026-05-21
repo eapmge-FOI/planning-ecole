@@ -41,11 +41,6 @@
           <span class="unit">heures</span>
         </div>
         <div class="summary-item">
-          <span class="label">Dispo instructeurs / aspirant :</span>
-          <span class="value" id="disposoHoursPerAspirant">0</span>
-          <span class="unit">heures</span>
-        </div>
-        <div class="summary-item">
           <span class="label">Total général :</span>
           <span class="value" id="totalWithDispo">0</span>
           <span class="unit">heures</span>
@@ -62,6 +57,7 @@
           </div>
           <span class="label">Cours communs</span>
           <span class="value" id="commonHours">0 h</span>
+          <span class="count" id="commonCourses">0 cours</span>
         </div>
         <div class="breakdown-item">
           <div class="breakdown-bar">
@@ -69,6 +65,7 @@
           </div>
           <span class="label">Divisées simultanément</span>
           <span class="value" id="simultaneousHours">0 h</span>
+          <span class="count" id="simultaneousCourses">0 cours</span>
         </div>
         <div class="breakdown-item">
           <div class="breakdown-bar">
@@ -76,6 +73,7 @@
           </div>
           <span class="label">Divisées séquentiellement en 2 classes</span>
           <span class="value" id="sequential2Hours">0 h</span>
+          <span class="count" id="sequential2Courses">0 cours</span>
         </div>
         <div class="breakdown-item">
           <div class="breakdown-bar">
@@ -83,22 +81,40 @@
           </div>
           <span class="label">Divisées séquentiellement en 3+ classes</span>
           <span class="value" id="sequential3PlusHours">0 h</span>
+          <span class="count" id="sequential3PlusCourses">0 cours</span>
         </div>
       </div>
     </div>
 
     <div class="card" id="tableCard" style="display:none;">
-      <h2>📋 Détail des cours</h2>
+      <h2>📋 Détail des cours par catégorie</h2>
       <table id="coursesTable">
         <thead>
           <tr>
+            <th>Catégorie</th>
             <th>ID</th>
             <th>Branche</th>
             <th>Leçon</th>
             <th>Durée (min)</th>
             <th>Groupes</th>
             <th>Exécution</th>
-            <th>Heures totales</th>
+            <th>Rotation</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+
+      <h2 class="subsection-title">Détail des rotations séquentielles</h2>
+      <table id="rotationTable">
+        <thead>
+          <tr>
+            <th>Classes</th>
+            <th>Durée</th>
+            <th>Cours disponibles</th>
+            <th>Créneaux comptés</th>
+            <th>Heures brutes</th>
+            <th>Heures à dispo</th>
           </tr>
         </thead>
         <tbody>
